@@ -4,6 +4,3 @@
 # build directories
 /build
 /dist
-
-# auto-generated makefile
-/libsol-Makefile.mk
