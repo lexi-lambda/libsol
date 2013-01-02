@@ -8,18 +8,47 @@
 #include "solop.h"
 #include "soltypes.h"
 
-const sol_obj DEFAULT_OBJ = {
-    TYPE_SOL_OBJ, NULL, NULL, NULL
-};
+const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 1, NULL, NULL, NULL };
 
-SolObject Object;
-SolObject nil;
+void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data,  size_t size, char* token) {
+    SolObject new_obj = malloc(size);
+    memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
+    memcpy(new_obj + 1, default_data, size - sizeof(sol_obj));
+    new_obj->parent = sol_obj_retain(parent);
+    new_obj->type_id = type;
+    sol_token_register(token, new_obj);
+    return new_obj;
+}
+
+SolObject sol_obj_retain(SolObject obj) {
+    obj->retain_count++;
+    return obj;
+}
+
+void sol_obj_release(SolObject obj) {
+    obj->retain_count--;
+    if (obj->retain_count <= 0) {
+        // TODO: handle dealloc of objects' properties/prototypes
+        free(obj);
+        if (obj->parent != NULL) {
+            sol_obj_release(obj->parent);
+        }
+    }
+}
 
 SolObject sol_obj_clone(SolObject obj) {
     SolObject new_obj = malloc(sizeof(*new_obj));
-    new_obj->parent = obj;
-    new_obj->prototype = NULL;
-    new_obj->properties = NULL;
+    memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
+    new_obj->parent = sol_obj_retain(obj);
+    return new_obj;
+}
+
+void* sol_obj_clone_type(SolObject obj, void* default_data, size_t size) {
+    SolObject new_obj = malloc(size);
+    memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
+    memcpy(new_obj + 1, default_data, size - sizeof(sol_obj));
+    new_obj->type_id = obj->type_id;
+    new_obj->parent = sol_obj_retain(obj);
     return new_obj;
 }
 
@@ -34,15 +63,16 @@ SolObject sol_obj_evaluate(SolObject obj) {
         case TYPE_SOL_DATATYPE:
         case TYPE_SOL_OPERATOR:
             return obj;
-        case TYPE_SOL_LIST: {;
+        case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
             if (list->freezeCount < 0) {
-                SolObject first_object = sol_obj_evaluate(list->first->value);
+                SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
+                SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
                 obj_type first_type = first_object->type_id;
                 switch (first_type) {
-                    case TYPE_SOL_FUNC: {;
+                    case TYPE_SOL_FUNC: {
                         SolFunction func = (SolFunction) first_object;
-                        return sol_func_execute(func, sol_list_get_sublist_s(list, 1));
+                        return sol_func_execute(func, sol_list_get_sublist_s(list, 1), self);
                     }
                     case TYPE_SOL_OPERATOR: {
                         SolOperator operation = (SolOperator) first_object;
@@ -104,6 +134,8 @@ char* sol_obj_to_string(SolObject obj) {
                 }
                 case DATA_TYPE_STR:
                     return strdup(((SolString) datatype)->value);
+                case DATA_TYPE_BOOL:
+                    return strdup(((SolBoolean) datatype)->value ? "true" : "false");
             }
         }
         case TYPE_SOL_OPERATOR:

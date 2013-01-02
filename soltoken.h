@@ -11,12 +11,11 @@
 #include "sol.h"
 #include "uthash.h"
 
-
-typedef struct sol_token {
-    sol_obj super; // extend sol_obj
+STRUCT_EXTEND(sol_obj, sol_token,
     char* identifier;
-} sol_token;
+);
 typedef sol_token* SolToken;
+extern SolToken Token;
 
 typedef struct token_pool_entry {
     char* identifier;

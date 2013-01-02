@@ -4,18 +4,15 @@
 #include "sol.h"
 #include "sollist.h"
 
-
-const sol_list DEFAULT_LIST = {
-    {
-        TYPE_SOL_LIST, NULL, NULL, NULL
-    }, NULL, NULL, 0, NULL, 0
-};
-
-
 SolList sol_list_create() {
-    SolList list_value = malloc(sizeof(*list_value));
-    memcpy(list_value, &DEFAULT_LIST, sizeof(*list_value));
-    return list_value;
+    return sol_obj_clone_type((SolObject) List, &(struct sol_list_raw){
+            false,
+            NULL,
+            NULL,
+            0,
+            NULL,
+            0
+        }, sizeof(sol_list));
 }
 
 void sol_list_add_obj(SolList list, SolObject obj) {

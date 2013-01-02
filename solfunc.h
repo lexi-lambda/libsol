@@ -11,17 +11,13 @@
 #include "sollist.h"
 #include "soltoken.h"
 
-
-typedef struct sol_func {
-    sol_obj super; // extend sol_obj
+STRUCT_EXTEND(sol_obj, sol_func,
     SolList parameters;
     SolList statements;
     TokenMap closure_scope;
-} sol_func;
-
-extern const sol_func DEFAULT_FUNC;
-
+);
 typedef sol_func* SolFunction;
+extern SolFunction Function;
 
 
 /**
@@ -38,7 +34,7 @@ SolFunction sol_func_create(SolList parameters, SolList statements);
  * @param arguments
  * @return function return value
  */
-SolObject sol_func_execute(SolFunction func, SolList arguments);
+SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self);
 
 #endif	/* SOLFUNC_H */
 

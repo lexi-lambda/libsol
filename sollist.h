@@ -8,6 +8,7 @@
 #ifndef SOLLIST_H
 #define	SOLLIST_H
 
+#include <stdbool.h>
 #include "sol.h"
 
 typedef struct sol_list_node {
@@ -16,19 +17,17 @@ typedef struct sol_list_node {
     SolObject value;
 } sol_list_node;
 
-typedef struct sol_list {
-    sol_obj super; // extend sol_obj
+STRUCT_EXTEND(sol_obj, sol_list,
+    bool object_mode;
     sol_list_node *first;
     sol_list_node *last;
     int current_index;
     sol_list_node *current;
     int length;
     int freezeCount;
-} sol_list;
-
-extern const sol_list DEFAULT_LIST;
-
+);
 typedef sol_list* SolList;
+extern SolList List;
 
 
 #define SOL_LIST_ITR_BEGIN(list) (list)->current = (list)->first;     \

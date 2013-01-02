@@ -2,22 +2,15 @@
 #include "soltoken.h"
 #include "solfunc.h"
 
-const sol_func DEFAULT_FUNC = {
-    {
-        TYPE_SOL_FUNC, NULL, NULL, NULL
-    }, NULL, NULL, NULL
-};
-
 SolFunction sol_func_create(SolList parameters, SolList statements) {
-    SolFunction func = malloc(sizeof(*func));
-    memcpy(func, &DEFAULT_FUNC, sizeof(*func));
-    func->parameters = parameters;
-    func->statements = statements;
-    func->closure_scope = sol_token_pool_snapshot();
-    return func;
+    return (SolFunction) sol_obj_clone_type((SolObject) Function, &(struct sol_func_raw){
+            parameters,
+            statements,
+            sol_token_pool_snapshot()
+        }, sizeof(sol_func));
 }
 
-SolObject sol_func_execute(SolFunction func, SolList arguments) {
+SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) {
     SolList parameters = func->parameters;
     SolList statements = func->statements;
     
@@ -25,6 +18,9 @@ SolObject sol_func_execute(SolFunction func, SolList arguments) {
     sol_token_pool_push_m(func->closure_scope);
     // create function scope
     sol_token_pool_push();
+    
+    // create 'self' reference
+    sol_token_register("self", self);
     
     // perform parameter substitution
     arguments->current = arguments->first;

@@ -9,6 +9,9 @@
 #define	SOL_H
 
 #include <stdlib.h>
+#include <stdbool.h>
+
+#define STRUCT_EXTEND(super_name, name, body) struct name ## _raw { body }; typedef struct name { super_name super; body } name
 
 typedef enum {
     TYPE_SOL_OBJ,
@@ -23,6 +26,7 @@ struct token_pool_entry;
 
 typedef struct sol_obj {
     obj_type type_id;
+    int retain_count;
     struct sol_obj* parent;
     struct token_pool_entry* prototype;
     struct token_pool_entry* properties;
@@ -36,12 +40,47 @@ extern SolObject Object;
 extern SolObject nil;
 
 /**
+ * Creates a new object from the given parent with the given type.
+ * Should only be used by runtime internals for initializing new object types.
+ * @param parent the object to clone from
+ * @param type the type of object to create
+ * @param default_data a pointer to a piece of data to copy to the new object (after default Object properties)
+ * @param size the size of the resulting object
+ * @param token the token to bind the object to
+ * @return the new object
+ */
+void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data, size_t size, char* token);
+
+/**
+ * Retains an object, incrementing its retain count and preventing deallocation.
+ * @param obj
+ * @return retained object
+ */
+SolObject sol_obj_retain(SolObject obj);
+
+/**
+ * Releases an object, decrementing its retain count and deallocating if necessary.
+ * @param obj
+ */
+void sol_obj_release(SolObject obj);
+
+/**
  * Clones an object, returning a new object with its parent prototype
  * set to the cloned object's.
  * @param obj
  * @return new object
  */
 SolObject sol_obj_clone(SolObject obj);
+
+/**
+ * Clones an object to a given size. Meant to be used only for creating clones
+ * of sol types, such as Number, String, Token, etc.
+ * @param obj
+ * @param default_data a pointer to a piece of data to copy to the new object (after default Object properties)
+ * @param size
+ * @return new object
+ */
+void* sol_obj_clone_type(SolObject obj, void* default_data, size_t size);
 
 /**
  * Evaluates an object.

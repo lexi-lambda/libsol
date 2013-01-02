@@ -3,46 +3,32 @@
 
 #include "soltypes.h"
 
-
-const sol_num DEFAULT_NUM = {
-    {
-        { TYPE_SOL_DATATYPE, NULL, NULL, NULL }, DATA_TYPE_NUM
-    }, 0
-};
-
-const sol_string DEFAULT_STRING = {
-    {
-        { TYPE_SOL_DATATYPE, NULL, NULL, NULL }, DATA_TYPE_STR
-    }, NULL
-};
-
-static sol_bool BOOL_FALSE = {
-    {
-        { TYPE_SOL_DATATYPE, NULL, NULL, NULL }, DATA_TYPE_BOOL
-    }, 0
-};
-static sol_bool BOOL_TRUE = {
-    {
-        { TYPE_SOL_DATATYPE, NULL, NULL, NULL }, DATA_TYPE_BOOL
-    }, 1
-};
-
 SolNumber sol_num_create(double value) {
-    SolNumber new_num = malloc(sizeof(*new_num));
-    memcpy(new_num, &DEFAULT_NUM, sizeof(*new_num));
-    new_num->value = value;
-    return new_num;
+    return (SolNumber) sol_obj_clone_type((SolObject) Number, &(struct sol_num_raw){
+            DATA_TYPE_NUM,
+            value
+        }, sizeof(sol_num));
 }
 
 SolString sol_string_create(char* value) {
-    SolString new_string = malloc(sizeof(*new_string));
-    memcpy(new_string, &DEFAULT_STRING, sizeof(*new_string));
-    new_string->value = value;
-    return new_string;
+    return (SolString) sol_obj_clone_type((SolObject) Number, &(struct sol_string_raw){
+            DATA_TYPE_STR,
+            value
+        }, sizeof(sol_string));
 }
 
-SolBoolean sol_bool_create(int value) {
-    return value == 0 ? &BOOL_FALSE : &BOOL_TRUE;
+SolBoolean sol_bool_create(bool value) {
+    static SolBoolean SOL_TRUE = NULL;
+    if (SOL_TRUE == NULL) SOL_TRUE = (SolBoolean) sol_obj_clone_type((SolObject) Boolean, &(struct sol_bool_raw){
+            DATA_TYPE_BOOL,
+            true
+        }, sizeof(sol_bool));
+    static SolBoolean SOL_FALSE = NULL;
+    if (SOL_FALSE == NULL) SOL_FALSE = (SolBoolean) sol_obj_clone_type((SolObject) Boolean, &(struct sol_bool_raw){
+            DATA_TYPE_BOOL,
+            false
+        }, sizeof(sol_bool));
+    return value ? SOL_TRUE : SOL_FALSE;
 }
 
 SolBoolean sol_bool_value_of(SolObject obj) {
@@ -51,9 +37,9 @@ SolBoolean sol_bool_value_of(SolObject obj) {
             if (((SolDatatype) obj)->type_id == DATA_TYPE_BOOL) {
                 return (SolBoolean) obj;
             } else {
-                return sol_bool_create(1);
+                return sol_bool_create(true);
             }
         default:
-            return sol_bool_create(1);
+            return sol_bool_create(true);
     }
 }

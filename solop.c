@@ -165,9 +165,9 @@ DEFINEOP(LOOP) {
     return result;
 }
 
-#define DECLAREOP(opname) const sol_operator OP_ ## opname = {      \
-    { TYPE_SOL_OPERATOR, NULL, NULL, NULL },                  \
-    &perform_OP_ ## opname                                    \
+#define DECLAREOP(opname) const sol_operator OP_ ## opname = {   \
+    { TYPE_SOL_OPERATOR, 1, NULL, NULL, NULL },                  \
+    &perform_OP_ ## opname                                       \
 }
 
 DECLAREOP(ADD);

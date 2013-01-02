@@ -7,21 +7,21 @@ CND_BASEDIR=`pwd`
 CND_BUILDDIR=build
 CND_DISTDIR=dist
 # Debug configuration
-CND_PLATFORM_Debug=GNU-MacOSX
-CND_ARTIFACT_DIR_Debug=dist/Debug/GNU-MacOSX
+CND_PLATFORM_Debug=CLang-MacOSX
+CND_ARTIFACT_DIR_Debug=dist/Debug/CLang-MacOSX
 CND_ARTIFACT_NAME_Debug=libsol.a
-CND_ARTIFACT_PATH_Debug=dist/Debug/GNU-MacOSX/libsol.a
-CND_PACKAGE_DIR_Debug=dist/Debug/GNU-MacOSX/package
+CND_ARTIFACT_PATH_Debug=dist/Debug/CLang-MacOSX/libsol.a
+CND_PACKAGE_DIR_Debug=dist/Debug/CLang-MacOSX/package
 CND_PACKAGE_NAME_Debug=libsol.tar
-CND_PACKAGE_PATH_Debug=dist/Debug/GNU-MacOSX/package/libsol.tar
+CND_PACKAGE_PATH_Debug=dist/Debug/CLang-MacOSX/package/libsol.tar
 # Release configuration
-CND_PLATFORM_Release=GNU-MacOSX
-CND_ARTIFACT_DIR_Release=dist/Release/GNU-MacOSX
+CND_PLATFORM_Release=CLang-MacOSX
+CND_ARTIFACT_DIR_Release=dist/Release/CLang-MacOSX
 CND_ARTIFACT_NAME_Release=libsol.a
-CND_ARTIFACT_PATH_Release=dist/Release/GNU-MacOSX/libsol.a
-CND_PACKAGE_DIR_Release=dist/Release/GNU-MacOSX/package
+CND_ARTIFACT_PATH_Release=dist/Release/CLang-MacOSX/libsol.a
+CND_PACKAGE_DIR_Release=dist/Release/CLang-MacOSX/package
 CND_PACKAGE_NAME_Release=libsol.tar
-CND_PACKAGE_PATH_Release=dist/Release/GNU-MacOSX/package/libsol.tar
+CND_PACKAGE_PATH_Release=dist/Release/CLang-MacOSX/package/libsol.tar
 #
 # include compiler specific variables
 #

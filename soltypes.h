@@ -8,6 +8,7 @@
 #ifndef SOLTYPES_H
 #define	SOLTYPES_H
 
+#include <stdbool.h>
 #include "sol.h"
 
 typedef enum data_type {
@@ -16,36 +17,37 @@ typedef enum data_type {
     DATA_TYPE_BOOL
 } data_type;
 
-typedef struct sol_datatype {
-    sol_obj super; // extend sol_obj
+#define DEFINE_DATATYPE(name, body) STRUCT_EXTEND(sol_obj, name, data_type type_id; body)
+
+STRUCT_EXTEND(sol_obj, sol_datatype,
     data_type type_id;
-} sol_datatype;
+);
 typedef sol_datatype* SolDatatype;
 
-typedef struct sol_num {
-    sol_datatype super; // extend sol_datatype
+DEFINE_DATATYPE(sol_num,
     double value;
-} sol_num;
+);
 typedef sol_num* SolNumber;
+extern SolNumber Number;
 
-typedef struct sol_string {
-    sol_datatype super; // extend sol_datatype
+DEFINE_DATATYPE(sol_string,
     char* value;
-} sol_string;
+);
 typedef sol_string* SolString;
+extern SolString String;
 
-typedef struct sol_bool {
-    sol_datatype super; // extend sol_datatype
-    int value;
-} sol_bool;
+DEFINE_DATATYPE(sol_bool,
+    bool value;
+);
 typedef sol_bool* SolBoolean;
+extern SolBoolean Boolean;
 
 
 SolNumber sol_num_create(double value);
 
 SolString sol_string_create(char* value);
 
-SolBoolean sol_bool_create(int value);
+SolBoolean sol_bool_create(bool value);
 SolBoolean sol_bool_value_of(SolObject obj);
 
 #endif	/* SOLTYPES_H */
