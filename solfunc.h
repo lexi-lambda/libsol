@@ -12,6 +12,7 @@
 #include "soltoken.h"
 
 STRUCT_EXTEND(sol_obj, sol_func,
+    bool is_operator;
     SolList parameters;
     SolList statements;
     TokenMap closure_scope;

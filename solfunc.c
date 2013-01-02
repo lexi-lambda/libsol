@@ -1,9 +1,11 @@
 
 #include "soltoken.h"
 #include "solfunc.h"
+#include "solop.h"
 
 SolFunction sol_func_create(SolList parameters, SolList statements) {
     return (SolFunction) sol_obj_clone_type((SolObject) Function, &(struct sol_func_raw){
+            false,
             parameters,
             statements,
             sol_token_pool_snapshot()
@@ -11,6 +13,8 @@ SolFunction sol_func_create(SolList parameters, SolList statements) {
 }
 
 SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) {
+    if (func->is_operator) return ((SolOperator) func)->operator_ref(arguments, self);
+    
     SolList parameters = func->parameters;
     SolList statements = func->statements;
     

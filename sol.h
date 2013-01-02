@@ -18,7 +18,6 @@ typedef enum {
     TYPE_SOL_LIST,
     TYPE_SOL_FUNC,
     TYPE_SOL_DATATYPE,
-    TYPE_SOL_OPERATOR,
     TYPE_SOL_TOKEN
 } obj_type;
 

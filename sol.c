@@ -61,7 +61,6 @@ SolObject sol_obj_evaluate(SolObject obj) {
         case TYPE_SOL_OBJ:
         case TYPE_SOL_FUNC:
         case TYPE_SOL_DATATYPE:
-        case TYPE_SOL_OPERATOR:
             return obj;
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
@@ -73,10 +72,6 @@ SolObject sol_obj_evaluate(SolObject obj) {
                     case TYPE_SOL_FUNC: {
                         SolFunction func = (SolFunction) first_object;
                         return sol_func_execute(func, sol_list_get_sublist_s(list, 1), self);
-                    }
-                    case TYPE_SOL_OPERATOR: {
-                        SolOperator operation = (SolOperator) first_object;
-                        return (*operation->operation_ref)(sol_list_get_sublist_s(list, 1));
                     }
                     default:
                         fprintf(stderr, "ERROR: Attempted to execute non-executable object.\n");
@@ -111,8 +106,6 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
             }
         case TYPE_SOL_TOKEN:
             return !strcmp(((SolToken) obj_a)->identifier, ((SolToken) obj_b)->identifier);
-        case TYPE_SOL_OPERATOR:
-            return ((SolOperator) obj_a)->operation_ref == ((SolOperator) obj_b)->operation_ref;
         default:
             return obj_a == obj_b;
     }
@@ -138,8 +131,6 @@ char* sol_obj_to_string(SolObject obj) {
                     return strdup(((SolBoolean) datatype)->value ? "true" : "false");
             }
         }
-        case TYPE_SOL_OPERATOR:
-            return strdup("operator");
         case TYPE_SOL_LIST:
             return strdup("List");
         case TYPE_SOL_TOKEN:
