@@ -62,6 +62,13 @@ void sol_token_pool_push_m(TokenMap pool);
 void sol_token_pool_pop();
 
 /**
+ * Destroys the current scope level but does not clear the pool's contents.
+ * Returns a possibly updated pointer to the new version of the pool.
+ * @return pool
+ */
+TokenMap sol_token_pool_pop_m();
+
+/**
  * Gets a "snapshot" of the current token pool, a single map of all token
  * pointer values.
  * @return token map

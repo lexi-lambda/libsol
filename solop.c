@@ -20,17 +20,17 @@ SolOperator sol_operator_create(SolOperatorRef operator_ref) {
 DEFINEOP(ADD, {
     SolNumber result = sol_num_create(0);
     SOL_LIST_ITR_BEGIN(arguments)
-        SolNumber num = (SolNumber) sol_obj_evaluate(arguments->current->value);
+        SolNumber num = (SolNumber) arguments->current->value;
         result->value += num->value;
     SOL_LIST_ITR_END(arguments)
     return (SolObject) result;
 });
 
 DEFINEOP(SUBTRACT, {
-    SolNumber result = sol_num_create(((SolNumber) sol_obj_evaluate(arguments->first->value))->value);
+    SolNumber result = sol_num_create(((SolNumber) arguments->first->value)->value);
     SolList minusArguments = sol_list_get_sublist_s(arguments, 1);
     SOL_LIST_ITR_BEGIN(minusArguments)
-        SolNumber num = (SolNumber) sol_obj_evaluate(minusArguments->current->value);
+        SolNumber num = (SolNumber) minusArguments->current->value;
         result->value -= num->value;
     SOL_LIST_ITR_END(minusArguments)
     return (SolObject) result;
@@ -39,65 +39,43 @@ DEFINEOP(SUBTRACT, {
 DEFINEOP(MULTIPLY, {
     SolNumber result = sol_num_create(1);
     SOL_LIST_ITR_BEGIN(arguments)
-        SolNumber num = (SolNumber) sol_obj_evaluate(arguments->current->value);
+        SolNumber num = (SolNumber) arguments->current->value;
         result->value *= num->value;
     SOL_LIST_ITR_END(arguments)
     return (SolObject) result;
 });
 
 DEFINEOP(DIVIDE, {
-    SolNumber result = sol_num_create(((SolNumber) sol_obj_evaluate(arguments->first->value))->value);
+    SolNumber result = sol_num_create(((SolNumber) arguments->first->value)->value);
     SolList minusArguments = sol_list_get_sublist_s(arguments, 1);
     SOL_LIST_ITR_BEGIN(minusArguments)
-        SolNumber num = (SolNumber) sol_obj_evaluate(minusArguments->current->value);
+        SolNumber num = (SolNumber) minusArguments->current->value;
         result->value /= num->value;
     SOL_LIST_ITR_END(minusArguments)
     return (SolObject) result;
 });
 
 DEFINEOP(MOD, {
-    SolNumber result = sol_num_create(((SolNumber) sol_obj_evaluate(arguments->first->value))->value);
+    SolNumber result = sol_num_create(((SolNumber) arguments->first->value)->value);
     SolList minusArguments = sol_list_get_sublist_s(arguments, 1);
     SOL_LIST_ITR_BEGIN(minusArguments)
-        SolNumber num = (SolNumber) sol_obj_evaluate(minusArguments->current->value);
+        SolNumber num = (SolNumber) minusArguments->current->value;
         result->value = fmod(result->value, num->value);
     SOL_LIST_ITR_END(minusArguments)
     return (SolObject) result;
 });
 
 DEFINEOP(BIND, {
-    SolObject result = nil;
-    if (arguments->first->value->type_id == TYPE_SOL_LIST) {
-        SolList list_args = (SolList) arguments;
-        SOL_LIST_ITR_BEGIN(list_args)
-            SolList binding = (SolList) list_args->current->value;
-            SolToken token = (SolToken) binding->first->value;
-            result = binding->length > 1 ? binding->first->next->value : nil;
-            sol_token_register(token->identifier, result);
-        SOL_LIST_ITR_END(list_args)
-    } else {
-        SolToken token = (SolToken) arguments->first->value;
-        result = arguments->length > 1 ? arguments->first->next->value : nil;
-        sol_token_register(token->identifier, result);
-    }
+    SolToken token = (SolToken) arguments->first->value;
+    SolObject result = arguments->length > 1 ? arguments->first->next->value : nil;
+    sol_token_register(token->identifier, result);
     return result;
 });
 
 DEFINEOP(SET, {
-    SolObject result = nil;
-    if (arguments->first->value->type_id == TYPE_SOL_LIST) {
-        SolList list_args = (SolList) arguments;
-        SOL_LIST_ITR_BEGIN(list_args)
-            SolList binding = (SolList) list_args->current->value;
-            SolToken token = (SolToken) binding->first->value;
-            result = sol_obj_evaluate(binding->first->next->value);
-            sol_token_update(token->identifier, result);
-        SOL_LIST_ITR_END(list_args)
-    } else {
-        SolToken token = (SolToken) arguments->first->value;
-        result = sol_obj_evaluate(arguments->first->next->value);
-        sol_token_update(token->identifier, result);
-    }
+    SolToken token = (SolToken) arguments->first->value;
+    SolObject result = arguments->first->next->value;
+    sol_token_update(token->identifier, result);
     return result;
 });
 
@@ -112,7 +90,7 @@ DEFINEOP(LAMBDA, {
 });
 
 DEFINEOP(PRINT, {
-    SolObject argument = sol_obj_evaluate(arguments->first->value);
+    SolObject argument = arguments->first->value;
     printf("%s\n", sol_obj_to_string(argument));
     return argument;
 });
@@ -123,20 +101,24 @@ DEFINEOP(NOT, {
 
 DEFINEOP(AND, {
     SOL_LIST_ITR_BEGIN(arguments)
-        if (!sol_bool_value_of(arguments->current->value)->value) return (SolObject) sol_bool_create(0);
+        if (!sol_bool_value_of(arguments->current->value)->value) return arguments->current->value;
     SOL_LIST_ITR_END(arguments)
     return (SolObject) sol_bool_create(1);
 });
 
 DEFINEOP(OR, {
     SOL_LIST_ITR_BEGIN(arguments)
-        if (sol_bool_value_of(arguments->current->value)->value) return (SolObject) sol_bool_create(1);
+        if (sol_bool_value_of(arguments->current->value)->value) return arguments->current->value;
     SOL_LIST_ITR_END(arguments)
-    return (SolObject) sol_bool_create(0);
+    return arguments->last->value;
 });
 
 DEFINEOP(EQUALITY, {
-    return (SolObject) sol_bool_create(sol_obj_equals(sol_obj_evaluate(arguments->first->value), sol_obj_evaluate(arguments->first->next->value)));
+    SolObject first = arguments->first->value;
+    SOL_LIST_ITR_BEGIN(arguments)
+        if (!sol_obj_equals(arguments->first->value, arguments->first->next->value)) return (SolObject) sol_bool_create(false);
+    SOL_LIST_ITR_END(arguments)
+    return (SolObject) sol_bool_create(true);
 });
 
 DEFINEOP(LESS_THAN, {
@@ -156,10 +138,10 @@ DEFINEOP(GREATER_THAN_EQUALITY, {
 });
 
 DEFINEOP(IF, {
-    if (sol_bool_value_of(sol_obj_evaluate(arguments->first->value))->value) {
-        return sol_obj_evaluate((SolObject) arguments->first->next);
+    if (sol_bool_value_of(arguments->first->value)->value) {
+        return (SolObject) arguments->first->next;
     } else if (arguments->first->next->next != NULL) {
-        return sol_obj_evaluate((SolObject) arguments->first->next->next);
+        return (SolObject) arguments->first->next->next;
     }
     return nil;
 });

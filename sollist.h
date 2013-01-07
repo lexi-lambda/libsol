@@ -30,12 +30,14 @@ typedef sol_list* SolList;
 extern SolList List;
 
 
-#define SOL_LIST_ITR_BEGIN(list) (list)->current = (list)->first;     \
+#define SOL_LIST_ITR_BEGIN(list) if ((list)->length > 0) {            \
+                                 (list)->current = (list)->first;     \
                                  (list)->current_index = 0;           \
                                  do {
 
 #define SOL_LIST_ITR_END(list)   (list)->current_index++;             \
-                                 } while (((list)->current = (list)->current->next) != NULL && (list)->current_index < (list)->length);
+                                 } while (((list)->current = (list)->current->next) != NULL && (list)->current_index < (list)->length); \
+                                 }
 
 /**
  * Creates a new, empty list object.

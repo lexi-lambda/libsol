@@ -39,10 +39,14 @@ void sol_runtime_init() {
     nil = (SolObject) sol_list_create();
     sol_token_register("nil", nil);
     
+    // set up prototypes
+    sol_obj_set_proto((SolObject) Function, "$evaluate-tokens", (SolObject) sol_bool_create(true));
+    sol_obj_set_proto((SolObject) Function, "$evaluate-lists", (SolObject) sol_bool_create(true));
+    
     sol_runtime_init_operators();
 }
 
-#define REGISTER_OP(token, name) sol_token_register(#token, (SolObject) sol_operator_create(OP_ ## name))
+#define REGISTER_OP(token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_token_register(#token, (SolObject) OBJ_ ## name)
 static inline void sol_runtime_init_operators() {
     REGISTER_OP(+, ADD);
     REGISTER_OP(-, SUBTRACT);
@@ -50,9 +54,15 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(/, DIVIDE);
     REGISTER_OP(mod, MOD);
     REGISTER_OP(bind, BIND);
+    sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);
+    sol_obj_set_prop((SolObject) OBJ_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(evaluate, EVALUATE);
+    sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(^, LAMBDA);
+    sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
     REGISTER_OP(and, AND);
@@ -64,6 +74,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(>=, GREATER_THAN_EQUALITY);
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
+    sol_obj_set_prop((SolObject) OBJ_LOOP, "$evaluate-lists", (SolObject) sol_bool_create(false));
 }
 
 void sol_runtime_destroy() {

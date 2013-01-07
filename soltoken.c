@@ -13,14 +13,14 @@ SolToken sol_token_create(char* identifier) {
 
 void sol_token_pool_push() {
     TokenPool old_token_pool = local_token_pool;
-    local_token_pool = malloc(sizeof(token_pool_entry));
+    local_token_pool = malloc(sizeof(*local_token_pool));
     local_token_pool->next = old_token_pool;
     local_token_pool->pool = NULL;
 }
 
 void sol_token_pool_push_m(TokenMap pool) {
     TokenPool old_token_pool = local_token_pool;
-    local_token_pool = malloc(sizeof(token_pool_entry));
+    local_token_pool = malloc(sizeof(*local_token_pool));
     local_token_pool->next = old_token_pool;
     local_token_pool->pool = pool;
 }
@@ -28,13 +28,26 @@ void sol_token_pool_push_m(TokenMap pool) {
 void sol_token_pool_pop() {
     // repoint local_token_pool
     TokenPool old_token_pool = local_token_pool;
-    local_token_pool = old_token_pool->next;
+    local_token_pool = local_token_pool->next;
     
     // clean up old pool and contents
-    TokenPoolEntry current_token, tmp;
-    HASH_ITER(hh, local_token_pool->pool, current_token, tmp) {
-        HASH_DEL(local_token_pool->pool, current_token);
+    if (old_token_pool->pool != NULL) {
+        TokenPoolEntry current_token, tmp;
+        HASH_ITER(hh, old_token_pool->pool, current_token, tmp) {
+            // TODO: release pool contents
+            HASH_DEL(old_token_pool->pool, current_token);
+        }
     }
+    free(old_token_pool);
+}
+
+TokenMap sol_token_pool_pop_m() {
+    // repoint local_token_pool
+    TokenPool old_token_pool = local_token_pool;
+    local_token_pool = local_token_pool->next;
+    
+    // return current pool
+    return old_token_pool->pool;
 }
 
 TokenMap sol_token_pool_snapshot() {
@@ -49,7 +62,13 @@ TokenMap sol_token_pool_snapshot() {
             TokenPoolEntry read_token;
             HASH_FIND_STR(snapshot, current_token->identifier, read_token);
             if (read_token == NULL) {
-                HASH_ADD_KEYPTR(hh, snapshot, current_token->identifier, strlen(current_token->identifier), current_token);
+                // create a new entry (we need a new hash handle)
+                TokenPoolEntry new_token = malloc(sizeof(*new_token));
+                new_token->identifier = strdup(current_token->identifier);
+                new_token->value = malloc(sizeof(*new_token->value));
+                memcpy(new_token->value, current_token->value, sizeof(*new_token->value));
+                sol_obj_retain(*new_token->value);
+                HASH_ADD_KEYPTR(hh, snapshot, new_token->identifier, strlen(new_token->identifier), new_token);
             }
         }
     }

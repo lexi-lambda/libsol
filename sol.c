@@ -165,11 +165,12 @@ void sol_obj_set_prop(SolObject obj, char* token, SolObject value) {
     // check if entry already exists
     HASH_FIND_STR(obj->properties, token, new_token);
     if (new_token == NULL) {
-        new_token = malloc(sizeof(sol_token));
+        new_token = malloc(sizeof(token_pool_entry));
         new_token->identifier = token;
         HASH_ADD_KEYPTR(hh, obj->properties, new_token->identifier, strlen(new_token->identifier), new_token);
     }
-    new_token->value = &value;
+    new_token->value = malloc(sizeof(*new_token->value));
+    memcpy(new_token->value, &value, sizeof(*new_token->value));
 }
 
 SolObject sol_obj_get_proto(SolObject obj, char* token) {
@@ -188,9 +189,10 @@ void sol_obj_set_proto(SolObject obj, char* token, SolObject value) {
     // check if entry already exists
     HASH_FIND_STR(obj->prototype, token, new_token);
     if (new_token == NULL) {
-        new_token = malloc(sizeof(sol_token));
+        new_token = malloc(sizeof(token_pool_entry));
         new_token->identifier = token;
-        HASH_ADD_KEYPTR(hh, obj->properties, new_token->identifier, strlen(new_token->identifier), new_token);
+        HASH_ADD_KEYPTR(hh, obj->prototype, new_token->identifier, strlen(new_token->identifier), new_token);
     }
-    new_token->value = &value;
+    new_token->value = malloc(sizeof(*new_token->value));
+    memcpy(new_token->value, &value, sizeof(*new_token->value));
 }
