@@ -36,7 +36,7 @@ void sol_runtime_init() {
     String = (SolString) sol_obj_create_global(Object, TYPE_SOL_DATATYPE, &(struct sol_string_raw){ DATA_TYPE_STR, NULL }, sizeof(*String), "String");
     Boolean = (SolBoolean) sol_obj_create_global(Object, TYPE_SOL_DATATYPE, &(struct sol_bool_raw){ DATA_TYPE_BOOL, 1 }, sizeof(*Boolean), "Boolean");
     
-    nil = (SolObject) sol_list_create();
+    nil = (SolObject) sol_list_create(false);
     sol_token_register("nil", nil);
     
     // set up prototypes

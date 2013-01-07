@@ -41,9 +41,10 @@ extern SolList List;
 
 /**
  * Creates a new, empty list object.
+ * @param object_mode
  * @return new list
  */
-SolList sol_list_create();
+SolList sol_list_create(bool object_mode);
 
 /**
  * Adds an object to the end of this list. This should only be used to populate

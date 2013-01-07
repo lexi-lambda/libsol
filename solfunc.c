@@ -20,7 +20,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     bool evaluate_lists = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-lists"))->value;
     
     if (func->is_operator) {
-        SolList evaluated = sol_list_create();
+        SolList evaluated = sol_list_create(false);
         SOL_LIST_ITR_BEGIN(arguments)
             SolObject object = arguments->current->value;
             switch (object->type_id) {

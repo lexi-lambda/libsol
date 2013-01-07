@@ -4,9 +4,9 @@
 #include "sol.h"
 #include "sollist.h"
 
-SolList sol_list_create() {
+SolList sol_list_create(bool object_mode) {
     return sol_obj_clone_type((SolObject) List, &(struct sol_list_raw){
-            false,
+            object_mode,
             NULL,
             NULL,
             0,
