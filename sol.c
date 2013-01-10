@@ -71,7 +71,7 @@ SolObject sol_obj_evaluate(SolObject obj) {
                 switch (first_type) {
                     case TYPE_SOL_FUNC: {
                         SolFunction func = (SolFunction) first_object;
-                        return sol_func_execute(func, sol_list_get_sublist_s(list, 1), self);
+                        return sol_func_execute(func, sol_list_get_sublist_s(list, list->object_mode ? 2 : 1), self);
                     }
                     default:
                         fprintf(stderr, "ERROR: Attempted to execute non-executable object.\n");

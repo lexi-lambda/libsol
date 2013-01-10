@@ -153,3 +153,16 @@ DEFINEOP(LOOP, {
     }
     return result;
 });
+
+DEFINEOP(OBJECT_GET, {
+    return sol_obj_get_prop(self, ((SolToken) arguments->first->value)->identifier);
+});
+
+DEFINEOP(OBJECT_SET, {
+    sol_obj_set_prop(self, ((SolToken) arguments->first->value)->identifier, arguments->first->next->value);
+    return arguments->first->next->value;
+});
+
+DEFINEOP(OBJECT_CLONE, {
+    return sol_obj_clone(self);
+});

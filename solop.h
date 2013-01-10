@@ -20,32 +20,43 @@ STRUCT_EXTEND(sol_obj, sol_operator,
 typedef sol_operator* SolOperator;
 
 
-// MATH OPERATORS
+/* CORE FUNCTIONS */
+// MATH
 extern const SolOperatorRef OP_ADD;
 extern const SolOperatorRef OP_SUBTRACT;
 extern const SolOperatorRef OP_MULTIPLY;
 extern const SolOperatorRef OP_DIVIDE;
 extern const SolOperatorRef OP_MOD;
-// CORE OPERATORS
+// CORE
 extern const SolOperatorRef OP_BIND;
 extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_LAMBDA;
-// I/O OPERATORS
+// I/O
 extern const SolOperatorRef OP_PRINT;
-// LOGICAL OPERATORS
+// LOGIC
 extern const SolOperatorRef OP_NOT;
 extern const SolOperatorRef OP_AND;
 extern const SolOperatorRef OP_OR;
-// COMPARISON OPERATORS
+// COMPARISON
 extern const SolOperatorRef OP_EQUALITY;
 extern const SolOperatorRef OP_LESS_THAN;
 extern const SolOperatorRef OP_GREATER_THAN;
 extern const SolOperatorRef OP_LESS_THAN_EQUALITY;
 extern const SolOperatorRef OP_GREATER_THAN_EQUALITY;
-// CONTROL OPERATORS
+// CONTROL
 extern const SolOperatorRef OP_IF;
 extern const SolOperatorRef OP_LOOP;
+
+/* OBJECT FUNCTIONS */
+// OBJECT
+extern const SolOperatorRef OP_OBJECT_GET;
+extern const SolOperatorRef OP_OBJECT_SET;
+extern const SolOperatorRef OP_OBJECT_CLONE;
+// NUMBER
+// STRING
+// extern const SolOperatorRef OP_STRING_CONCATENATE;
+
 
 /**
  * Creates a sol operator object from a compliant function pointer.

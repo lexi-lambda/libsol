@@ -47,6 +47,7 @@ void sol_runtime_init() {
 }
 
 #define REGISTER_OP(token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_token_register(#token, (SolObject) OBJ_ ## name)
+#define REGISTER_METHOD(object, token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_obj_set_proto(object, #token, (SolObject) OBJ_ ## name);
 static inline void sol_runtime_init_operators() {
     REGISTER_OP(+, ADD);
     REGISTER_OP(-, SUBTRACT);
@@ -75,6 +76,12 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
     sol_obj_set_prop((SolObject) OBJ_LOOP, "$evaluate-lists", (SolObject) sol_bool_create(false));
+    
+    REGISTER_METHOD(Object, get, OBJECT_GET);
+    sol_obj_set_prop((SolObject) OBJ_OBJECT_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_METHOD(Object, set, OBJECT_SET);
+    sol_obj_set_prop((SolObject) OBJ_OBJECT_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_METHOD(Object, clone, OBJECT_CLONE);
 }
 
 void sol_runtime_destroy() {
