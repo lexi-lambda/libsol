@@ -120,6 +120,12 @@ help: .help-post
 # Add your post 'help' code here...
 
 
+# install
+install:
+	cp $(CND_ARTIFACT_PATH_Release) /usr/lib/
+	cp *.h /usr/include/sol/
+
+
 
 # include project implementation makefile
 include nbproject/Makefile-impl.mk
