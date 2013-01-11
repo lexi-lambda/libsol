@@ -116,23 +116,60 @@ char* sol_obj_to_string(SolObject obj) {
         case TYPE_SOL_OBJ:
             return strdup("Object");
         case TYPE_SOL_FUNC:
-            return strdup("lambda");
-        case TYPE_SOL_DATATYPE: {;
+            return strdup("Function");
+        case TYPE_SOL_DATATYPE: {
             SolDatatype datatype = (SolDatatype) obj;
             switch (datatype->type_id) {
-                case DATA_TYPE_NUM: {;
-                    char buff[32];
-                    snprintf(buff, 32, "%lf", ((SolNumber) datatype)->value);
-                    return strdup(buff);
+                case DATA_TYPE_NUM: {
+                    char* ret;
+                    asprintf(&ret, "%f", ((SolNumber) datatype)->value);
+                    return ret;
                 }
-                case DATA_TYPE_STR:
-                    return strdup(((SolString) datatype)->value);
+                case DATA_TYPE_STR: {
+                    char* ret;
+                    asprintf(&ret, "\"%s\"", ((SolString) datatype)->value);
+                    return ret;
+                }
                 case DATA_TYPE_BOOL:
                     return strdup(((SolBoolean) datatype)->value ? "true" : "false");
             }
         }
-        case TYPE_SOL_LIST:
-            return strdup("List");
+        case TYPE_SOL_LIST: {
+            SolList list = (SolList) obj;
+            if (list->length > 0) {
+                int buffer_len = 512;
+                char* buffer = malloc(buffer_len);
+                buffer[0] = '\0';
+                char* str = buffer;
+                
+                if (list->object_mode) str += sprintf(str, "@");
+                if (list->freezeCount < 0) str += sprintf(str, "[");
+                else str += sprintf(str, "(");
+                
+                int i = 0;
+                SOL_LIST_ITR_BEGIN(list)
+                    char* obj = sol_obj_to_string(list->current->value);
+                    while (str + strlen(obj) - buffer > buffer_len) {
+                        buffer = reallocf(buffer, buffer_len *= 2);
+                        str = buffer + strlen(buffer);
+                    }
+                    str += sprintf(str, "%s", obj);
+                    free(obj);
+                    if (i < list->length - 1) str += sprintf(str, " ");
+                    i++;
+                SOL_LIST_ITR_END(list)
+                
+                if (list->freezeCount < 0) str += sprintf(str, "]");
+                else str += sprintf(str, ")");
+                
+                char* ret = malloc(str - buffer + 1);
+                memcpy(ret, buffer, str - buffer + 1);
+                free(buffer);
+                return ret;
+            } else {
+                return strdup("nil");
+            }
+        }
         case TYPE_SOL_TOKEN:
             return strdup(((SolToken) obj)->identifier);
     }
