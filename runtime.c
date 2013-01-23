@@ -54,6 +54,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(*, MULTIPLY);
     REGISTER_OP(/, DIVIDE);
     REGISTER_OP(mod, MOD);
+    REGISTER_OP(require, REQUIRE);
     REGISTER_OP(bind, BIND);
     sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);

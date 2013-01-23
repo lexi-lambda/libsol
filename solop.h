@@ -28,6 +28,7 @@ extern const SolOperatorRef OP_MULTIPLY;
 extern const SolOperatorRef OP_DIVIDE;
 extern const SolOperatorRef OP_MOD;
 // CORE
+extern const SolOperatorRef OP_REQUIRE;
 extern const SolOperatorRef OP_BIND;
 extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_EVALUATE;

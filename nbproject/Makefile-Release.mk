@@ -39,13 +39,14 @@ OBJECTFILES= \
 	${OBJECTDIR}/soltypes.o \
 	${OBJECTDIR}/soltoken.o \
 	${OBJECTDIR}/runtime.o \
+	${OBJECTDIR}/solar.o \
 	${OBJECTDIR}/sol.o \
 	${OBJECTDIR}/sollist.o \
 	${OBJECTDIR}/solfunc.o
 
 
 # C Compiler Flags
-CFLAGS=
+CFLAGS=-lyaml
 
 # CC Compiler Flags
 CCFLAGS=
@@ -89,6 +90,11 @@ ${OBJECTDIR}/runtime.o: runtime.c
 	${MKDIR} -p ${OBJECTDIR}
 	${RM} $@.d
 	$(COMPILE.c) -O2 -std=c99 -MMD -MP -MF $@.d -o ${OBJECTDIR}/runtime.o runtime.c
+
+${OBJECTDIR}/solar.o: solar.c 
+	${MKDIR} -p ${OBJECTDIR}
+	${RM} $@.d
+	$(COMPILE.c) -O2 -std=c99 -MMD -MP -MF $@.d -o ${OBJECTDIR}/solar.o solar.c
 
 ${OBJECTDIR}/sol.o: sol.c 
 	${MKDIR} -p ${OBJECTDIR}

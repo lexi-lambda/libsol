@@ -7,6 +7,7 @@
 #include "soltypes.h"
 #include "soltoken.h"
 #include "solfunc.h"
+#include "solar.h"
 
 SolOperator sol_operator_create(SolOperatorRef operator_ref) {
     return (SolOperator) sol_obj_clone_type((SolObject) Function, &(struct sol_operator_raw){
@@ -63,6 +64,12 @@ DEFINEOP(MOD, {
         result->value = fmod(result->value, num->value);
     SOL_LIST_ITR_END(minusArguments)
     return (SolObject) result;
+});
+
+DEFINEOP(REQUIRE, {
+    SolString string = (SolString) arguments->first->value;
+    solar_load(string->value);
+    return nil;
 });
 
 DEFINEOP(BIND, {

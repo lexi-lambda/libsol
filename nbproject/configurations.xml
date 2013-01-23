@@ -6,6 +6,7 @@
                    projectFiles="true">
       <itemPath>runtime.h</itemPath>
       <itemPath>sol.h</itemPath>
+      <itemPath>solar.h</itemPath>
       <itemPath>solfunc.h</itemPath>
       <itemPath>sollist.h</itemPath>
       <itemPath>solop.h</itemPath>
@@ -25,6 +26,7 @@
                    projectFiles="true">
       <itemPath>runtime.c</itemPath>
       <itemPath>sol.c</itemPath>
+      <itemPath>solar.c</itemPath>
       <itemPath>solfunc.c</itemPath>
       <itemPath>sollist.c</itemPath>
       <itemPath>solop.c</itemPath>
@@ -53,6 +55,7 @@
       <compileType>
         <cTool>
           <standard>3</standard>
+          <commandLine>-lyaml</commandLine>
         </cTool>
         <archiverTool>
           <output>${CND_DISTDIR}/${CND_CONF}/${CND_PLATFORM}/libsol.a</output>
@@ -68,6 +71,7 @@
         <cTool>
           <developmentMode>5</developmentMode>
           <standard>3</standard>
+          <commandLine>-lyaml</commandLine>
         </cTool>
         <ccTool>
           <developmentMode>5</developmentMode>
