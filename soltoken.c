@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include "soltoken.h"
 
 TokenPoolEntry sol_token_resolve_entry(char* token);
@@ -65,8 +66,7 @@ TokenMap sol_token_pool_snapshot() {
                 // create a new entry (we need a new hash handle)
                 TokenPoolEntry new_token = malloc(sizeof(*new_token));
                 new_token->identifier = strdup(current_token->identifier);
-                new_token->value = malloc(sizeof(*new_token->value));
-                memcpy(new_token->value, current_token->value, sizeof(*new_token->value));
+                new_token->value = current_token->value;
                 sol_obj_retain(*new_token->value);
                 HASH_ADD_KEYPTR(hh, snapshot, new_token->identifier, strlen(new_token->identifier), new_token);
             }

@@ -100,7 +100,7 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
                 case DATA_TYPE_BOOL:
                     return !((SolBoolean) obj_a)->value == !((SolBoolean) obj_b)->value;
                 case DATA_TYPE_NUM:
-                    return !((SolNumber) obj_a)->value == !((SolNumber) obj_b)->value;
+                    return ((SolNumber) obj_a)->value == ((SolNumber) obj_b)->value;
                 case DATA_TYPE_STR:
                     return !strcmp(((SolString) obj_a)->value, ((SolString) obj_b)->value);
             }

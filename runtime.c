@@ -24,7 +24,7 @@ void sol_runtime_init() {
     local_token_pool = calloc(1, sizeof(*local_token_pool));
     
     // seed rand
-    srand(time(NULL));
+    srand((unsigned int) time(NULL));
     
     // initialize object types
     Object = malloc(sizeof(*Object));

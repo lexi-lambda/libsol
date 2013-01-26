@@ -145,37 +145,41 @@ DEFINEOP(GREATER_THAN_EQUALITY, {
 
 DEFINEOP(IF, {
     if (sol_bool_value_of(arguments->first->value)->value) {
-        return (SolObject) arguments->first->next;
+        return sol_func_execute((SolFunction) arguments->first->next->value, sol_list_create(false), nil);
     } else if (arguments->first->next->next != NULL) {
-        return (SolObject) arguments->first->next->next;
+        return sol_func_execute((SolFunction) arguments->first->next->next->value, sol_list_create(false), nil);
     }
     return nil;
 });
 
 DEFINEOP(LOOP, {
     SolObject result = nil;
+    SolFunction function = (SolFunction) sol_obj_evaluate(arguments->first->next->value);
     while (sol_bool_value_of(sol_obj_evaluate(arguments->first->value))->value) {
-        result = sol_obj_evaluate(arguments->first->next->value);
+        result = sol_func_execute(function, sol_list_create(false), nil);
     }
     return result;
 });
 
 DEFINEOP(CAT, {
     int len = 1;
+    SolList strings = sol_list_create(false);
     SOL_LIST_ITR_BEGIN(arguments)
-        len += strlen(((SolString) arguments->current->value)->value);
+    sol_list_add_obj(strings, (arguments->current->value->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) arguments->current->value)->type_id == DATA_TYPE_STR) ? arguments->current->value : (SolObject) sol_string_create(sol_obj_to_string(arguments->current->value)));
+        len += strlen(((SolString) strings->last->value)->value);
     SOL_LIST_ITR_END(arguments)
     char* result = malloc(len);
     char* pos = result;
-    SOL_LIST_ITR_BEGIN(arguments)
-        char* arg = ((SolString) arguments->current->value)->value;
+    SOL_LIST_ITR_BEGIN(strings)
+        char* arg = ((SolString) strings->current->value)->value;
         while (*arg != '\0') {
             *pos = *arg;
             arg++;
             pos++;
         }
-    SOL_LIST_ITR_END(arguments)
+    SOL_LIST_ITR_END(strings)
     *pos = '\0';
+    sol_obj_release((SolObject) strings);
     return (SolObject) sol_string_create(result);
 });
 
