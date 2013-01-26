@@ -121,7 +121,6 @@ DEFINEOP(OR, {
 });
 
 DEFINEOP(EQUALITY, {
-    SolObject first = arguments->first->value;
     SOL_LIST_ITR_BEGIN(arguments)
         if (!sol_obj_equals(arguments->first->value, arguments->first->next->value)) return (SolObject) sol_bool_create(false);
     SOL_LIST_ITR_END(arguments)
@@ -159,6 +158,25 @@ DEFINEOP(LOOP, {
         result = sol_obj_evaluate(arguments->first->next->value);
     }
     return result;
+});
+
+DEFINEOP(CAT, {
+    int len = 1;
+    SOL_LIST_ITR_BEGIN(arguments)
+        len += strlen(((SolString) arguments->current->value)->value);
+    SOL_LIST_ITR_END(arguments)
+    char* result = malloc(len);
+    char* pos = result;
+    SOL_LIST_ITR_BEGIN(arguments)
+        char* arg = ((SolString) arguments->current->value)->value;
+        while (*arg != '\0') {
+            *pos = *arg;
+            arg++;
+            pos++;
+        }
+    SOL_LIST_ITR_END(arguments)
+    *pos = '\0';
+    return (SolObject) sol_string_create(result);
 });
 
 DEFINEOP(OBJECT_GET, {

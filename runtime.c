@@ -82,6 +82,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
     sol_obj_set_prop((SolObject) OBJ_LOOP, "$evaluate-lists", (SolObject) sol_bool_create(false));
+    REGISTER_OP(cat, CAT);
     
     REGISTER_METHOD(Object, get, OBJECT_GET);
     sol_obj_set_prop((SolObject) OBJ_OBJECT_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
