@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+#include <time.h>
 #include "sol.h"
 #include "soltoken.h"
 #include "soltypes.h"
@@ -20,6 +22,9 @@ static inline void sol_runtime_init_operators();
 
 void sol_runtime_init() {
     local_token_pool = calloc(1, sizeof(*local_token_pool));
+    
+    // seed rand
+    srand(time(NULL));
     
     // initialize object types
     Object = malloc(sizeof(*Object));
