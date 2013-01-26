@@ -13,7 +13,7 @@ static inline yaml_node_t* yaml_node_get_element(yaml_document_t* document, yaml
 void solar_load(char* filename) {
     // load solar file
     char* path;
-    asprintf(&path, "/usr/lib/sol/%s.solar", filename);
+    asprintf(&path, "/usr/local/lib/sol/%s.solar", filename);
     
     // load configuration file
     char* config_path;
