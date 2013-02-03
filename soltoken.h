@@ -17,9 +17,15 @@ STRUCT_EXTEND(sol_obj, sol_token,
 typedef sol_token* SolToken;
 extern SolToken Token;
 
+typedef struct token_binding {
+    SolObject value;
+    int retain_count;
+} token_binding;
+typedef token_binding* TokenBinding;
+
 typedef struct token_pool_entry {
     char* identifier;
-    SolObject* value;
+    TokenBinding binding;
     UT_hash_handle hh;
 } token_pool_entry;
 typedef token_pool_entry* TokenPoolEntry;

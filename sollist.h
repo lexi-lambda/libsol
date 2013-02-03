@@ -64,31 +64,34 @@ void sol_list_add_obj(SolList list, SolObject obj);
 SolObject sol_list_get_obj(SolList list, int index);
 
 /**
- * Creates a new list containing only a portion of the original. The returned
- * list's values are not copied, and remain the same from the original list.
+ * Creates a new list and copies a set of values from the original.
+ * The values pointed to are the same, but the new list is a wholly
+ * separate structure. The items are retained.
  * @param list
  * @param start
  * @param end
  * @return new list
  */
-SolList sol_list_get_sublist(SolList list, int start, int end);
+SolList sol_list_slice(SolList list, int start, int end);
 
 /**
- * Creates a new list containing only a potion of the origin. This method will
- * yield the same result as list_get_sublist with the list's length as the second parameter.
+ * Creates a new list and copies a set of values from the original.
+ * The values pointed to are the same, but the new list is a wholly
+ * separate structure. The items are retained.
  * @param list
  * @param start
  * @return new list
  */
-SolList sol_list_get_sublist_s(SolList list, int start);
+SolList sol_list_slice_s(SolList list, int start);
 
 /**
- * Creates a new list containing only a potion of the origin. This method will
- * yield the same result as list_get_sublist with 0 as the first parameter.
+ * Creates a new list and copies a set of values from the original.
+ * The values pointed to are the same, but the new list is a wholly
+ * separate structure. The items are retained.
  * @param list
  * @param end
  * @return new list
  */
-SolList sol_list_get_sublist_e(SolList list, int end);
+SolList sol_list_slice_e(SolList list, int end);
 
 #endif	/* SOLLIST_H */

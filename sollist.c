@@ -17,7 +17,7 @@ SolList sol_list_create(bool object_mode) {
 
 void sol_list_add_obj(SolList list, SolObject obj) {
     sol_list_node* new_node = malloc(sizeof(*new_node));
-    new_node->value = obj;
+    new_node->value = sol_obj_retain(obj);
     new_node->next = NULL;
     if (list->first == NULL || list->last == NULL) {
         new_node->prev = NULL;
@@ -51,57 +51,54 @@ SolObject sol_list_get_obj(SolList list, int index) {
     return list->current->value;
 }
 
-SolList sol_list_get_sublist(SolList list, int start, int end) {
-    // copy list
-    sol_list list_value = *list;
-    sol_list new_value = list_value;
-    SolList new_list = &new_value;
+SolList sol_list_slice(SolList list, int start, int end) {
+    // create new list
+    SolList new_list = sol_list_create(list->object_mode);
     
-    // advance start pointer
+    // walk to starting position
+    sol_list_node* node = list->first;
     for (int i = 0; i < start; i++) {
-        new_list->first = new_list->first->next;
+        node = node->next;
     }
     
-    // advance end pointer
-    for (int i = new_list->length; i > end; i--) {
-        new_list->last = new_list->last->prev;
+    // copy nodes
+    for (int i = 0; i < end; i++) {
+        sol_list_add_obj(new_list, node->value);
+        node = node->next;
     }
-    
-    // update length
-    new_list->length -= start + (new_list->length - end);
     
     return new_list;
 }
 
-SolList sol_list_get_sublist_s(SolList list, int start) {
-    // copy list
-    SolList new_list = malloc(sizeof(*new_list));
-    memcpy(new_list, list, sizeof(*new_list));
+SolList sol_list_slice_s(SolList list, int start) {
+    // create new list
+    SolList new_list = sol_list_create(list->object_mode);
     
-    // advance start pointer
+    // walk to starting position
+    sol_list_node* node = list->first;
     for (int i = 0; i < start; i++) {
-        new_list->first = new_list->first->next;
+        node = node->next;
     }
     
-    // update length
-    new_list->length -= start;
+    // copy nodes
+    while (node != NULL) {
+        sol_list_add_obj(new_list, node->value);
+        node = node->next;
+    }
     
     return new_list;
 }
 
-SolList sol_list_get_sublist_e(SolList list, int end) {
-    // copy list
-    sol_list list_value = *list;
-    sol_list new_value = list_value;
-    SolList new_list = &new_value;
+SolList sol_list_slice_e(SolList list, int end) {
+    // create new list
+    SolList new_list = sol_list_create(list->object_mode);
     
-    // advance end pointer
-    for (int i = new_list->length; i > end; i--) {
-        new_list->last = new_list->last->prev;
+    // copy nodes
+    sol_list_node* node = list->first;
+    for (int i = 0; i < end; i++) {
+        sol_list_add_obj(new_list, node->value);
+        node = node->next;
     }
-    
-    // update length
-    new_list->length -= new_list->length - end;
     
     return new_list;
 }

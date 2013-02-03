@@ -67,7 +67,7 @@ void solar_load(char* filename) {
 void solar_register_function(char* object, char* name, SolOperatorRef function, bool use_prototype) {
     SolObject parent = sol_token_resolve(object);
     SolOperator operator = sol_operator_create(function);
-    (use_prototype ? sol_obj_set_proto : sol_obj_set_prop)(parent, strdup(name), (SolObject) operator);
+    (use_prototype ? sol_obj_set_proto : sol_obj_set_prop)(parent, name, (SolObject) operator);
 }
 
 static inline char* yaml_node_get_value(yaml_node_t* node) {

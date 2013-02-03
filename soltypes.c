@@ -13,7 +13,7 @@ SolNumber sol_num_create(double value) {
 SolString sol_string_create(char* value) {
     return (SolString) sol_obj_clone_type((SolObject) Number, &(struct sol_string_raw){
             DATA_TYPE_STR,
-            value
+            strdup(value)
         }, sizeof(sol_string));
 }
 
@@ -32,15 +32,15 @@ SolBoolean sol_bool_create(bool value) {
 }
 
 SolBoolean sol_bool_value_of(SolObject obj) {
-    if (obj == NULL) return sol_bool_create(false);
+    if (obj == NULL) return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(false));
     switch (obj->type_id) {
         case TYPE_SOL_DATATYPE:
             if (((SolDatatype) obj)->type_id == DATA_TYPE_BOOL) {
                 return (SolBoolean) obj;
             } else {
-                return sol_bool_create(true);
+                return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
             }
         default:
-            return sol_bool_create(true);
+            return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
     }
 }
