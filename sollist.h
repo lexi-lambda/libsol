@@ -47,12 +47,27 @@ extern SolList List;
 SolList sol_list_create(bool object_mode);
 
 /**
- * Adds an object to the end of this list. This should only be used to populate
- * a list; at runtime, lists should be immutable.
+ * Adds an object to the end of this list.
  * @param list
  * @param obj
  */
 void sol_list_add_obj(SolList list, SolObject obj);
+
+/**
+ * Removes an object at the specified index and return that object.
+ * @param list
+ * @param index
+ * @return removed object
+ */
+SolObject sol_list_remove_obj(SolList list, int index);
+
+/**
+ * Adds an object at the given index in this list, pushing all the subsequent elements out of the way.
+ * @param list
+ * @param obj
+ * @param index
+ */
+void sol_list_insert_object(SolList list, SolObject obj, int index);
 
 /**
  * Gets an object from the list at an index. Note that this is an O(n) operation,
@@ -62,6 +77,15 @@ void sol_list_add_obj(SolList list, SolObject obj);
  * @return object
  */
 SolObject sol_list_get_obj(SolList list, int index);
+
+/**
+ * Searches the array for the element specified and returns the index of the first occurrence,
+ * or -1 if it doesn't exist.
+ * @param list
+ * @param obj
+ * @return index
+ */
+int sol_list_index_of(SolList list, SolObject obj);
 
 /**
  * Creates a new list and copies a set of values from the original.
