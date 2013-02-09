@@ -93,6 +93,15 @@ DEFINEOP(SET) {
     return result;
 }
 
+DEFINEOP(DEFINE) {
+    SolToken token = (SolToken) arguments->first->value;
+    if (sol_token_resolve(token->identifier) == NULL)
+        sol_token_register(token->identifier, nil);
+    SolObject result = sol_obj_retain(arguments->first->next->value);
+    sol_token_update(token->identifier, result);
+    return result;
+}
+
 DEFINEOP(EVALUATE) {
     return sol_obj_evaluate(arguments->first->value);
 }
@@ -101,6 +110,10 @@ DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) arguments->first->value;
     SolList statements = sol_list_slice_s(arguments, 1);
     return sol_obj_retain((SolObject) sol_func_create(parameters, statements));
+}
+
+DEFINEOP(TO_TOKEN) {
+    return sol_obj_retain((SolObject) sol_token_create(((SolString) arguments->first->value)->value));
 }
 
 DEFINEOP(PRINT) {
@@ -217,6 +230,15 @@ DEFINEOP(OBJECT_GET) {
 
 DEFINEOP(OBJECT_SET) {
     sol_obj_set_prop(self, ((SolToken) arguments->first->value)->identifier, arguments->first->next->value);
+    return sol_obj_retain(arguments->first->next->value);
+}
+
+DEFINEOP(PROTOTYPE_GET) {
+    return sol_obj_get_proto(self, ((SolToken) arguments->first->value)->identifier);
+}
+
+DEFINEOP(PROTOTYPE_SET) {
+    sol_obj_set_proto(self, ((SolToken) arguments->first->value)->identifier, arguments->first->next->value);
     return sol_obj_retain(arguments->first->next->value);
 }
 

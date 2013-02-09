@@ -31,8 +31,11 @@ extern const SolOperatorRef OP_MOD;
 extern const SolOperatorRef OP_REQUIRE;
 extern const SolOperatorRef OP_BIND;
 extern const SolOperatorRef OP_SET;
+extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_LAMBDA;
+// CONVERSION
+extern const SolOperatorRef OP_TO_TOKEN;
 // I/O
 extern const SolOperatorRef OP_PRINT;
 // LOGIC
@@ -52,13 +55,11 @@ extern const SolOperatorRef OP_LOOP;
 extern const SolOperatorRef OP_CAT;
 
 /* OBJECT FUNCTIONS */
-// OBJECT
 extern const SolOperatorRef OP_OBJECT_GET;
 extern const SolOperatorRef OP_OBJECT_SET;
+extern const SolOperatorRef OP_PROTOTYPE_GET;
+extern const SolOperatorRef OP_PROTOTYPE_SET;
 extern const SolOperatorRef OP_OBJECT_CLONE;
-// NUMBER
-// STRING
-// extern const SolOperatorRef OP_STRING_CONCATENATE;
 
 
 /**

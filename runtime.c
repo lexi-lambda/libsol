@@ -64,12 +64,15 @@ static inline void sol_runtime_init_operators() {
     sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);
     sol_obj_set_prop((SolObject) OBJ_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_OP(define, DEFINE);
+    sol_obj_set_prop((SolObject) OBJ_DEFINE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(evaluate, EVALUATE);
     sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(^, LAMBDA);
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
+    REGISTER_OP(->token, TO_TOKEN);
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
     REGISTER_OP(and, AND);
@@ -88,6 +91,10 @@ static inline void sol_runtime_init_operators() {
     sol_obj_set_prop((SolObject) OBJ_OBJECT_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, set, OBJECT_SET);
     sol_obj_set_prop((SolObject) OBJ_OBJECT_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_METHOD(Object, @get, PROTOTYPE_GET);
+    sol_obj_set_prop((SolObject) OBJ_PROTOTYPE_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_METHOD(Object, @set, PROTOTYPE_SET);
+    sol_obj_set_prop((SolObject) OBJ_PROTOTYPE_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
 }
 
