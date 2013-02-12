@@ -7,6 +7,7 @@
 
 /** libyaml wrapper functions **/
 static inline char* yaml_node_get_value(yaml_node_t* node);
+static inline yaml_node_pair_t* yaml_node_get_mapping(yaml_document_t* document, yaml_node_t* parent_node, int index);
 static inline yaml_node_t* yaml_node_get_child(yaml_document_t* document, yaml_node_t* parent_node, char* key);
 static inline yaml_node_t* yaml_node_get_element(yaml_document_t* document, yaml_node_t* sequence_node, int index);
 
@@ -42,16 +43,24 @@ void solar_load(char* filename) {
         int init_ret = 0;
         if (solar_init) init_ret = solar_init();
         // find all symbols to load and register them
-        yaml_node_t* symbol_list = yaml_node_get_child(&yaml_document, native_el, "export");
+        yaml_node_t* symbol_exports = yaml_node_get_child(&yaml_document, native_el, "export");
         int j = 0;
-        yaml_node_t* symbol_el;
-        while ((symbol_el = yaml_node_get_element(&yaml_document, symbol_list, j)) != NULL) {
-            char* symbol_name = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "name"));
-            char* symbol_function = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "function"));
-            char* symbol_object = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "object"));
-            yaml_node_t* symbol_use_prototype_node = yaml_node_get_child(&yaml_document, symbol_el, "use-prototype");
-            bool symbol_use_prototype = symbol_use_prototype_node ? !strcmp(yaml_node_get_value(symbol_use_prototype_node), "true") : false;
-            solar_register_function(symbol_object, symbol_name, (SolOperatorRef) dlsym(native_dl, symbol_function), symbol_use_prototype);
+        yaml_node_pair_t* symbol_pair;
+        while ((symbol_pair = yaml_node_get_mapping(&yaml_document, symbol_exports, j)) != NULL) {
+            // get preliminary information
+            yaml_node_t* symbol_list = yaml_document_get_node(&yaml_document, symbol_pair->value);
+            char* symbol_object = yaml_node_get_value(yaml_document_get_node(&yaml_document, symbol_pair->key));
+            // find all exported symbols
+            yaml_node_t* symbol_el;
+            int k = 0;
+            while ((symbol_el = yaml_node_get_element(&yaml_document, symbol_list, k)) != NULL) {
+                char* symbol_function = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "function"));
+                char* symbol_name = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "name"));
+                yaml_node_t* symbol_use_prototype_node = yaml_node_get_child(&yaml_document, symbol_el, "use-prototype");
+                bool symbol_use_prototype = symbol_use_prototype_node ? !strcmp(yaml_node_get_value(symbol_use_prototype_node), "true") : false;
+                solar_register_function(symbol_object, symbol_name, (SolOperatorRef) dlsym(native_dl, symbol_function), symbol_use_prototype);
+                k++;
+            }
             j++;
         }
         i++;
@@ -74,6 +83,11 @@ static inline char* yaml_node_get_value(yaml_node_t* node) {
     return (char*) node->data.scalar.value;
 }
 
+static inline yaml_node_pair_t* yaml_node_get_mapping(yaml_document_t* document, yaml_node_t* parent_node, int index) {
+    yaml_node_pair_t* pair = parent_node->data.mapping.pairs.start + index;
+    return pair < parent_node->data.mapping.pairs.top ? pair : NULL;
+}
+
 static inline yaml_node_t* yaml_node_get_child(yaml_document_t* document, yaml_node_t* parent_node, char* key) {
     yaml_node_pair_t* pair = parent_node->data.mapping.pairs.start;
     do {
@@ -81,11 +95,11 @@ static inline yaml_node_t* yaml_node_get_child(yaml_document_t* document, yaml_n
         if (!strcmp((char *) key_node->data.scalar.value, key)) {
             return yaml_document_get_node(document, pair->value);
         }
-    } while (pair++, pair <= parent_node->data.mapping.pairs.end);
+    } while (pair++, pair < parent_node->data.mapping.pairs.top);
     return NULL;
 }
 
 static inline yaml_node_t* yaml_node_get_element(yaml_document_t* document, yaml_node_t* sequence_node, int index) {
-    if (sequence_node->data.sequence.items.start + index > sequence_node->data.sequence.items.end) return NULL;
+    if (sequence_node->data.sequence.items.start + index >= sequence_node->data.sequence.items.top) return NULL;
     return yaml_document_get_node(document, sequence_node->data.sequence.items.start[index]);
 }
