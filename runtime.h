@@ -18,5 +18,7 @@
 void sol_runtime_init();
 void sol_runtime_destroy();
 
+void sol_runtime_execute(unsigned char* data);
+
 #endif	/* RUNTIME_H */
 
