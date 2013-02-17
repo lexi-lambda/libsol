@@ -1,13 +1,14 @@
 Building libsol
 ===============
 Building libsol only requires a C compiler (preferably Clang or GCC) and a
-single dependency.
+few dependencies.
 
 Requirements
 ------------
 To build libsol, you'll need to have the following installed on your system:
 
 * [libYAML](http://pyyaml.org/wiki/LibYAML) - a C YAML parser
+* [libevent](http://libevent.org/) - a C event library
 
 Building
 --------

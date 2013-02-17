@@ -29,11 +29,13 @@ extern const SolOperatorRef OP_DIVIDE;
 extern const SolOperatorRef OP_MOD;
 // CORE
 extern const SolOperatorRef OP_REQUIRE;
+extern const SolOperatorRef OP_EXIT;
 extern const SolOperatorRef OP_BIND;
 extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_LAMBDA;
+extern const SolOperatorRef OP_LISTEN;
 // CONVERSION
 extern const SolOperatorRef OP_TO_TOKEN;
 // I/O

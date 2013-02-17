@@ -9,6 +9,7 @@
 #include "sollist.h"
 #include "solfunc.h"
 #include "solop.h"
+#include "solevent.h"
 
 SolObject Object;
 SolToken Token;
@@ -17,6 +18,7 @@ SolList List;
 SolNumber Number;
 SolString String;
 SolBoolean Boolean;
+SolEvent Event;
 
 SolObject nil;
 
@@ -43,6 +45,9 @@ void sol_runtime_init() {
     String = (SolString) sol_obj_create_global(Object, TYPE_SOL_DATATYPE, &(struct sol_string_raw){ DATA_TYPE_STR, NULL }, sizeof(*String), "String");
     Boolean = (SolBoolean) sol_obj_create_global(Object, TYPE_SOL_DATATYPE, &(struct sol_bool_raw){ DATA_TYPE_BOOL, 1 }, sizeof(*Boolean), "Boolean");
     
+    Event = sol_obj_clone(Object);
+    sol_token_register("Event", Event);
+    
     nil = (SolObject) sol_list_create(false);
     sol_token_register("nil", nil);
     
@@ -51,6 +56,7 @@ void sol_runtime_init() {
     sol_obj_set_proto((SolObject) Function, "$evaluate-lists", (SolObject) sol_bool_create(true));
     
     sol_runtime_init_operators();
+    sol_event_loop_create();
 }
 
 #define REGISTER_OP(token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_token_register(#token, (SolObject) OBJ_ ## name)
@@ -62,6 +68,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(/, DIVIDE);
     REGISTER_OP(mod, MOD);
     REGISTER_OP(require, REQUIRE);
+    REGISTER_OP(exit, EXIT);
     REGISTER_OP(bind, BIND);
     sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);
@@ -74,6 +81,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(^, LAMBDA);
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
+    REGISTER_OP(listen, LISTEN);
     REGISTER_OP(->token, TO_TOKEN);
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
@@ -101,6 +109,9 @@ static inline void sol_runtime_init_operators() {
 }
 
 void sol_runtime_destroy() {
+    // wait for events to complete
+    if (sol_event_has_work())
+        sol_event_loop_run();
 }
 
 static SolObject sol_runtime_execute_get_object(unsigned char** data);

@@ -17,7 +17,8 @@ set (LIBSOL_SOURCES
     sollist.c
     solop.c
     soltoken.c
-    soltypes.c)
+    soltypes.c
+    solevent.c)
 set (LIBSOL_PUBLIC_HEADERS
     runtime.h
     sol.h
@@ -27,6 +28,7 @@ set (LIBSOL_PUBLIC_HEADERS
     solop.h
     soltoken.h
     soltypes.h
+    solevent.h
     utarray.h
     uthash.h
     utlist.h
@@ -41,6 +43,11 @@ add_library(sol SHARED ${LIBSOL_SOURCES} ${LIBSOL_PUBLIC_HEADERS} ${LIBSOL_PRIVA
 find_package(LibYAML REQUIRED)
 include_directories(${LIBYAML_INCLUDE_DIR})
 target_link_libraries(sol ${LIBYAML_LIBRARIES})
+
+# load an link libevent
+find_package(LibEvent REQUIRED)
+include_directories(${EVENT_INCLUDE_DIR})
+target_link_libraries(sol ${LIBEVENT_LIBRARY})
 
 # install libraries
 install(TARGETS sol LIBRARY DESTINATION lib)

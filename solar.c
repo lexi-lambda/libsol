@@ -39,7 +39,7 @@ void solar_load(char* filename) {
         void* native_dl = dlopen(native_path, RTLD_LAZY);
         free(native_path);
         // call init method
-        int (*solar_init)() = dlsym(native_dl, "solar_init");
+        int (*solar_init)(void) = dlsym(native_dl, "solar_init");
         int init_ret = 0;
         if (solar_init) init_ret = solar_init();
         // find all symbols to load and register them

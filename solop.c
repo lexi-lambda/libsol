@@ -8,6 +8,7 @@
 #include "soltoken.h"
 #include "solfunc.h"
 #include "solar.h"
+#include "solevent.h"
 
 SolOperator sol_operator_create(SolOperatorRef operator_ref) {
     return (SolOperator) sol_obj_clone_type((SolObject) Function, &(struct sol_operator_raw){
@@ -79,6 +80,12 @@ DEFINEOP(REQUIRE) {
     return nil;
 }
 
+DEFINEOP(EXIT) {
+    if (arguments->length > 0)
+        exit((int) ((SolNumber) arguments->first->value)->value);
+    exit(0);
+}
+
 DEFINEOP(BIND) {
     SolToken token = (SolToken) arguments->first->value;
     SolObject result = arguments->length > 1 ? sol_obj_retain(arguments->first->next->value) : nil;
@@ -110,6 +117,11 @@ DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) arguments->first->value;
     SolList statements = sol_list_slice_s(arguments, 1);
     return sol_obj_retain((SolObject) sol_func_create(parameters, statements));
+}
+
+DEFINEOP(LISTEN) {
+    sol_event_listener_add(((SolString) arguments->first->value)->value, (SolFunction) arguments->first->next->value);
+    return nil;
 }
 
 DEFINEOP(TO_TOKEN) {
