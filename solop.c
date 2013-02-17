@@ -124,6 +124,26 @@ DEFINEOP(LISTEN) {
     return nil;
 }
 
+void sol_event_callback(evutil_socket_t fd, short flags, void* arg) {
+    SolEvent event = arg;
+    SolString type = (SolString) sol_obj_get_prop(event, "type");
+    sol_event_listener_dispatch(type->value, event);
+    sol_obj_release((SolObject) type);
+    if ((flags & EV_PERSIST) == 0) {
+        sol_obj_release(event);
+    }
+}
+DEFINEOP(DISPATCH) {
+    struct sol_event event;
+    event.fd = -1;
+    event.flags = EV_TIMEOUT;
+    event.callback = sol_event_callback;
+    event.arg = sol_obj_retain(arguments->first->value);
+    event.timeout = NULL;
+    sol_event_loop_add_once(&event);
+    return nil;
+}
+
 DEFINEOP(TO_TOKEN) {
     return sol_obj_retain((SolObject) sol_token_create(((SolString) arguments->first->value)->value));
 }

@@ -50,6 +50,7 @@ void sol_event_loop_run(void);
 void sol_event_loop_stop(void);
 
 void sol_event_loop_add(struct sol_event* event);
+void sol_event_loop_add_once(struct sol_event* event);
 
 void sol_event_initializer_register(char* type, sol_event_initializer_fn initializer);
 

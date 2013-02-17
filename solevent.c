@@ -29,6 +29,10 @@ void sol_event_loop_add(struct sol_event* event) {
     event_add(ev, event->timeout);
 }
 
+void sol_event_loop_add_once(struct sol_event* event) {
+    event_base_once(base, event->fd, event->flags, event->callback, event->arg, event->timeout);
+}
+
 void sol_event_initializer_register(char* type, sol_event_initializer_fn initializer) {
     struct sol_event_initializer* new_initializer;
     // check if already exists
