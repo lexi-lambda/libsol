@@ -116,6 +116,7 @@ void sol_runtime_destroy() {
 }
 
 static SolObject sol_runtime_execute_get_object(unsigned char** data);
+static uint64_t sol_runtime_execute_decode_length(unsigned char** data);
 void sol_runtime_execute(unsigned char* data) {
     // ensure magic number is correct
     if (data[0] != 'S' || data[1] != 'O' || data[2] != 'L' || data[3] != 'B' || data[4] != 'I' || data[5] != 'N') {
@@ -136,9 +137,9 @@ void sol_runtime_execute(unsigned char* data) {
 static SolObject sol_runtime_execute_get_object(unsigned char** data) {
     switch (**data) {
         case 0x1: {
+            ++*data;
             SolObject object = sol_obj_clone(Object);
-            uint32_t length = *++*data;
-            *data += sizeof(length);
+            uint64_t length = sol_runtime_execute_decode_length(data);
             for (; length > 0; length--) {
                 SolString key = (SolString) sol_runtime_execute_get_object(data);
                 SolObject value = sol_runtime_execute_get_object(data);
@@ -150,11 +151,10 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
         }
         case 0x2: {
             SolList list = (SolList) sol_obj_retain((SolObject) sol_list_create((bool) *++*data));
-            uint32_t freezeCount = *++*data;
+            ++*data;
+            uint64_t freezeCount = sol_runtime_execute_decode_length(data);
             list->freezeCount = freezeCount - 1;
-            *data += sizeof(freezeCount);
-            uint32_t length = **data;
-            *data += sizeof(length);
+            uint64_t length = sol_runtime_execute_decode_length(data);
             for (; length > 0; length--) {
                 SolObject value = sol_runtime_execute_get_object(data);
                 sol_list_add_obj(list, value);
@@ -172,8 +172,8 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             return (SolObject) function;
         }
         case 0x4: {
-            uint32_t length = *++*data;
-            *data += sizeof(length);
+            ++*data;
+            uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
             value[sizeof(*value) * length] = '\0';
             *data += sizeof(*value) * length;
@@ -189,8 +189,8 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             return sol_obj_retain((SolObject) sol_num_create(value));
         }
         case 0x6: {
-            uint64_t length = *++*data;
-            *data += sizeof(length);
+            ++*data;
+            uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
             value[sizeof(*value) * length] = '\0';
             *data += sizeof(*value) * length;
@@ -209,4 +209,37 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             fprintf(stderr, "Error loading sol bytecode: invalid object type %u.\n", **data);
             exit(EXIT_FAILURE);
     }
+}
+static uint64_t sol_runtime_execute_decode_length(unsigned char** data) {
+    char length_type = (**data & 0xF0) >> 4;
+    uint64_t length;
+    switch (length_type) {
+        case 0x1:
+            length = **data & 0xF;
+            ++*data;
+            break;
+        case 0x2: {
+            uint16_t length_data;
+            memcpy(&length_data, *data, sizeof(length_data));
+            length = length_data;
+            *data += sizeof(uint16_t);
+            break;
+        }
+        case 0x3: {
+            uint32_t length_data;
+            memcpy(&length_data, *data, sizeof(length_data));
+            length = length_data;
+            *data += sizeof(uint32_t);
+            break;
+        }
+        case 0x4: {
+            memcpy(&length, *data, sizeof(length));
+            *data += sizeof(uint64_t);
+            break;
+        }
+        default:
+            fprintf(stderr, "Error loading sol bytecode: invalid length type 0x%x.\n", length_type);
+            exit(EXIT_FAILURE);
+    }
+    return length;
 }
