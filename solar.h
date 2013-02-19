@@ -13,7 +13,5 @@
 
 void solar_load(char* filename);
 
-void solar_register_function(char* object, char* name, SolOperatorRef function, bool on_prototype);
-
 #endif	/* SOLAR_H */
 
