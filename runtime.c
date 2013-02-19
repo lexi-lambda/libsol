@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <arpa/inet.h>
 #include "sol.h"
 #include "soltoken.h"
 #include "soltypes.h"
@@ -115,6 +116,29 @@ void sol_runtime_destroy() {
         sol_event_loop_run();
 }
 
+uint64_t htonll(uint64_t value);
+uint64_t ntohll(uint64_t value);
+uint64_t htonll(uint64_t value) {
+    uint16_t num = 1;
+    if (*(char *)&num == 1) {
+        uint32_t high_part = htonl((uint32_t) (value >> 32));
+        uint32_t low_part = htonl((uint32_t) (value & 0xFFFFFFFFLL));
+        return (((uint64_t) low_part) << 32) | high_part;
+    } else {
+        return value;
+    }
+}
+uint64_t ntohll(uint64_t value) {
+    uint16_t num = 1;
+    if (*(char *)&num == 1) {
+        uint32_t high_part = ntohl((uint32_t) (value >> 32));
+        uint32_t low_part = ntohl((uint32_t) (value & 0xFFFFFFFFLL));
+        return (((uint64_t) low_part) << 32) | high_part;
+    } else {
+        return value;
+    }
+}
+
 static SolObject sol_runtime_execute_get_object(unsigned char** data);
 static uint64_t sol_runtime_execute_decode_length(unsigned char** data);
 void sol_runtime_execute(unsigned char* data) {
@@ -221,19 +245,20 @@ static uint64_t sol_runtime_execute_decode_length(unsigned char** data) {
         case 0x2: {
             uint16_t length_data;
             memcpy(&length_data, *data, sizeof(length_data));
-            length = length_data;
+            length = ntohs(length_data);
             *data += sizeof(uint16_t);
             break;
         }
         case 0x3: {
             uint32_t length_data;
             memcpy(&length_data, *data, sizeof(length_data));
-            length = length_data;
+            length = ntohl(length_data);
             *data += sizeof(uint32_t);
             break;
         }
         case 0x4: {
             memcpy(&length, *data, sizeof(length));
+            length = ntohll(length);
             *data += sizeof(uint64_t);
             break;
         }
