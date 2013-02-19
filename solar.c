@@ -7,6 +7,12 @@
 #include "solevent.h"
 #include "soltypes.h"
 
+struct solar_module {
+    char* name;
+    UT_hash_handle hh;
+};
+static struct solar_module* loaded_modules = NULL;
+
 static inline void solar_register_function(char* object, char* name, SolOperatorRef function, bool on_prototype);
 static inline void solar_register_event(char* object, char* type_name, char* type_value, sol_event_initializer_fn initializer);
 
@@ -35,11 +41,15 @@ void solar_load(char* filename) {
     
     // load natives
     yaml_node_t* native_list = yaml_node_get_child(&yaml_document, yaml_document_get_root_node(&yaml_document), "natives");
-    int i = 0;
     yaml_node_t* native_el;
-    while ((native_el = yaml_node_get_element(&yaml_document, native_list, i)) != NULL) {
+    for (int i = 0; (native_el = yaml_node_get_element(&yaml_document, native_list, i)) != NULL; i++) {
         // load shared library
         char* name = yaml_node_get_value(yaml_node_get_child(&yaml_document, native_el, "name"));
+        // make sure library isn't loaded more than once
+        struct solar_module* loaded_module;
+        HASH_FIND_STR(loaded_modules, name, loaded_module);
+        if (loaded_module != NULL) continue;
+        // open shared library
         char* native_path; asprintf(&native_path, "%s/natives/%s", path, name);
         void* native_dl = dlopen(native_path, RTLD_LAZY);
         free(native_path);
@@ -51,53 +61,48 @@ void solar_load(char* filename) {
             fprintf(stderr, "Error loading solar module: '%s' init failed with error code %i.", name, init_ret);
             exit(EXIT_FAILURE);
         }
+        // mark library as loaded
+        loaded_module = malloc(sizeof(*loaded_module));
+        loaded_module->name = strdup(name);
+        HASH_ADD_KEYPTR(hh, loaded_modules, loaded_module->name, strlen(loaded_module->name), loaded_module);
         // find all symbols to load and register them
         yaml_node_t* symbol_exports = yaml_node_get_child(&yaml_document, native_el, "export");
         if (symbol_exports != NULL) {
-            int j = 0;
             yaml_node_pair_t* symbol_pair;
-            while ((symbol_pair = yaml_node_get_mapping(&yaml_document, symbol_exports, j)) != NULL) {
+            for (int j = 0; (symbol_pair = yaml_node_get_mapping(&yaml_document, symbol_exports, j)) != NULL; j++) {
                 // get preliminary information
                 char* symbol_object = yaml_node_get_value(yaml_document_get_node(&yaml_document, symbol_pair->key));
                 yaml_node_t* symbol_list = yaml_document_get_node(&yaml_document, symbol_pair->value);
                 // find all exported symbols
                 yaml_node_t* symbol_el;
-                int k = 0;
-                while ((symbol_el = yaml_node_get_element(&yaml_document, symbol_list, k)) != NULL) {
+                for (int k = 0; (symbol_el = yaml_node_get_element(&yaml_document, symbol_list, k)) != NULL; k++) {
                     char* symbol_function = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "function"));
                     char* symbol_name = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "name"));
                     yaml_node_t* symbol_use_prototype_node = yaml_node_get_child(&yaml_document, symbol_el, "use-prototype");
                     bool symbol_use_prototype = symbol_use_prototype_node ? !strcmp(yaml_node_get_value(symbol_use_prototype_node), "true") : false;
                     solar_register_function(symbol_object, symbol_name, (SolOperatorRef) dlsym(native_dl, symbol_function), symbol_use_prototype);
-                    k++;
                 }
-                j++;
             }
         }
         // register custom events
         yaml_node_t* event_definitions = yaml_node_get_child(&yaml_document, native_el, "events");
         if (event_definitions != NULL) {
-            int j = 0;
             yaml_node_pair_t* event_pair;
-            while ((event_pair = yaml_node_get_mapping(&yaml_document, event_definitions, j)) != NULL) {
+            for (int j = 0; (event_pair = yaml_node_get_mapping(&yaml_document, event_definitions, j)) != NULL; j++) {
                 // get preliminary information
                 char* event_object = yaml_node_get_value(yaml_document_get_node(&yaml_document, event_pair->key));
                 yaml_node_t* event_types = yaml_document_get_node(&yaml_document, event_pair->value);
                 // find all exported symbols
                 yaml_node_pair_t* event_type_pair;
-                int k = 0;
-                while ((event_type_pair = yaml_node_get_mapping(&yaml_document, event_types, k)) != NULL) {
+                for (int k = 0; (event_type_pair = yaml_node_get_mapping(&yaml_document, event_types, k)) != NULL; k++) {
                     char* event_type_name = yaml_node_get_value(yaml_document_get_node(&yaml_document, event_type_pair->key));
                     yaml_node_t* event_type = yaml_document_get_node(&yaml_document, event_type_pair->value);
                     char* event_type_value = yaml_node_get_value(yaml_node_get_child(&yaml_document, event_type, "type"));
                     char* event_initializer = yaml_node_get_value(yaml_node_get_child(&yaml_document, event_type, "initializer"));
                     solar_register_event(event_object, event_type_name, event_type_value, event_initializer ? (sol_event_initializer_fn) dlsym(native_dl, event_initializer) : NULL);
-                    k++;
                 }
-                j++;
             }
         }
-        i++;
     }
     
     // clean up
