@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <time.h>
+#include <math.h>
+#include <float.h>
 #include <arpa/inet.h>
 #include "sol.h"
 #include "soltoken.h"
@@ -139,9 +141,11 @@ uint64_t ntohll(uint64_t value) {
     }
 }
 
+static unsigned char* data_start;
 static SolObject sol_runtime_execute_get_object(unsigned char** data);
 static uint64_t sol_runtime_execute_decode_length(unsigned char** data);
 void sol_runtime_execute(unsigned char* data) {
+    data_start = data;
     // ensure magic number is correct
     if (data[0] != 'S' || data[1] != 'O' || data[2] != 'L' || data[3] != 'B' || data[4] != 'I' || data[5] != 'N') {
         fprintf(stderr, "Error executing sol bytecode: invalid magic number.\n");
@@ -207,10 +211,17 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
         }
         case 0x5: {
             ++*data;
-            double value;
-            memcpy(&value, *data, sizeof(value));
-            *data += sizeof(value);
-            return sol_obj_retain((SolObject) sol_num_create(value));
+            char sign = **data;
+            ++*data;
+            uint64_t base_data;
+            memcpy(&base_data, *data, sizeof(uint64_t));
+            base_data = ntohll(base_data);
+            *data += sizeof(uint64_t);
+            uint64_t exp_data = sol_runtime_execute_decode_length(data);
+            int exp = (sign & 0x1) ? exp_data : exp_data * -1;
+            double base = (double) base_data / pow(FLT_RADIX, DBL_MANT_DIG);
+            double value = ldexp(base, exp);
+            return sol_obj_retain((SolObject) sol_num_create((sign & 0x2) ? value : value * -1));
         }
         case 0x6: {
             ++*data;
@@ -246,6 +257,7 @@ static uint64_t sol_runtime_execute_decode_length(unsigned char** data) {
             uint16_t length_data;
             memcpy(&length_data, *data, sizeof(length_data));
             length = ntohs(length_data);
+            length &= 0xFFF;
             *data += sizeof(uint16_t);
             break;
         }
@@ -253,17 +265,19 @@ static uint64_t sol_runtime_execute_decode_length(unsigned char** data) {
             uint32_t length_data;
             memcpy(&length_data, *data, sizeof(length_data));
             length = ntohl(length_data);
+            length &= 0xFFFFF;
             *data += sizeof(uint32_t);
             break;
         }
         case 0x4: {
             memcpy(&length, *data, sizeof(length));
             length = ntohll(length);
+            length &= 0xFFFFFFF;
             *data += sizeof(uint64_t);
             break;
         }
         default:
-            fprintf(stderr, "Error loading sol bytecode: invalid length type 0x%x.\n", length_type);
+            fprintf(stderr, "Error loading sol bytecode: invalid length type %x (0x%x) at offset 0x%lx.\n", length_type, **data, *data - data_start);
             exit(EXIT_FAILURE);
     }
     return length;
