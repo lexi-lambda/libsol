@@ -64,7 +64,8 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     // create 'self' reference
     sol_token_register("self", self);
     
-    // perform parameter substitution
+    // insert 'arguments' reference and perform parameter substitution
+    sol_token_register("arguments", (SolObject) arguments);
     sol_func_substitute_parameters(func->parameters, arguments, evaluate_tokens, evaluate_lists);
     
     // execute function statements
@@ -86,7 +87,7 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
     arguments->current = arguments->first;
     SOL_LIST_ITR_BEGIN(parameters)
         SolToken token = (SolToken) parameters->current->value;
-        SolObject object = arguments->current->value;
+        SolObject object = arguments->current ? arguments->current->value : nil;
         switch (object->type_id) {
             case TYPE_SOL_TOKEN:
                 if (evaluate_tokens) {
@@ -112,6 +113,6 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
                 sol_obj_release(evaluated_object);
             }
         }
-        arguments->current = arguments->current->next;
+        if (arguments->current) arguments->current = arguments->current->next;
     SOL_LIST_ITR_END(parameters)
 }
