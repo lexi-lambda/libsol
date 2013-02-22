@@ -95,7 +95,7 @@ DEFINEOP(BIND) {
 
 DEFINEOP(SET) {
     SolToken token = (SolToken) arguments->first->value;
-    SolObject result = sol_obj_retain(arguments->first->next->value);
+    SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
     sol_token_update(token->identifier, result);
     return result;
 }
@@ -261,8 +261,9 @@ DEFINEOP(OBJECT_GET) {
 }
 
 DEFINEOP(OBJECT_SET) {
-    sol_obj_set_prop(self, ((SolToken) arguments->first->value)->identifier, arguments->first->next->value);
-    return sol_obj_retain(arguments->first->next->value);
+    SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
+    sol_obj_set_prop(self, ((SolToken) arguments->first->value)->identifier, result);
+    return result;
 }
 
 DEFINEOP(PROTOTYPE_GET) {
@@ -270,8 +271,9 @@ DEFINEOP(PROTOTYPE_GET) {
 }
 
 DEFINEOP(PROTOTYPE_SET) {
-    sol_obj_set_proto(self, ((SolToken) arguments->first->value)->identifier, arguments->first->next->value);
-    return sol_obj_retain(arguments->first->next->value);
+    SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
+    sol_obj_set_proto(self, ((SolToken) arguments->first->value)->identifier, result);
+    return result;
 }
 
 DEFINEOP(OBJECT_CLONE) {
