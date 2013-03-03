@@ -144,7 +144,7 @@ uint64_t ntohll(uint64_t value) {
 static unsigned char* data_start;
 static SolObject sol_runtime_execute_get_object(unsigned char** data);
 static uint64_t sol_runtime_execute_decode_length(unsigned char** data);
-void sol_runtime_execute(unsigned char* data) {
+SolObject sol_runtime_execute(unsigned char* data) {
     data_start = data;
     // ensure magic number is correct
     if (data[0] != 'S' || data[1] != 'O' || data[2] != 'L' || data[3] != 'B' || data[4] != 'I' || data[5] != 'N') {
@@ -156,11 +156,14 @@ void sol_runtime_execute(unsigned char* data) {
     data += 6;
     
     // execute top-level objects
-    SolObject obj;
+    SolObject obj, ans = nil;
     while ((obj = sol_runtime_execute_get_object(&data)) != NULL) {
-        sol_obj_evaluate(obj);
+        sol_obj_release(ans);
+        ans = sol_obj_evaluate(obj);
         sol_obj_release(obj);
     }
+    
+    return ans;
 }
 static SolObject sol_runtime_execute_get_object(unsigned char** data) {
     switch (**data) {
