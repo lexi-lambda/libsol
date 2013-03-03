@@ -60,6 +60,16 @@ void sol_runtime_init() {
     
     sol_runtime_init_operators();
     sol_event_loop_create();
+    
+    // automatically load the solcore library, if it exists
+    FILE* f = fopen("/usr/local/lib/sol/solcore.solar/descriptor.yml", "r");
+    if (f) {
+        fclose(f);
+        SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+        sol_list_add_obj(arguments, (SolObject) sol_string_create("solcore"));
+        OP_REQUIRE(arguments, nil);
+        sol_obj_release((SolObject) arguments);
+    }
 }
 
 #define REGISTER_OP(token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_token_register(#token, (SolObject) OBJ_ ## name)
