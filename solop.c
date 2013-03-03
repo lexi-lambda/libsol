@@ -74,9 +74,11 @@ DEFINEOP(MOD) {
 }
 
 DEFINEOP(REQUIRE) {
-    SolString string = (SolString) sol_obj_retain(arguments->first->value);
-    solar_load(string->value);
-    sol_obj_release((SolObject) string);
+    SOL_LIST_ITR_BEGIN(arguments)
+        SolString string = (SolString) sol_obj_retain(arguments->current->value);
+        solar_load(string->value);
+        sol_obj_release((SolObject) string);
+    SOL_LIST_ITR_END(arguments)
     return nil;
 }
 
