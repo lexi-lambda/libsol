@@ -170,27 +170,33 @@ DEFINEOP(NOT) {
 }
 
 DEFINEOP(AND) {
+    SolObject evaluated = nil;
     SOL_LIST_ITR_BEGIN(arguments)
-        SolBoolean value = sol_bool_value_of(arguments->current->value);
+        sol_obj_release(evaluated);
+        evaluated = sol_obj_evaluate(arguments->current->value);
+        SolBoolean value = sol_bool_value_of(evaluated);
         if (!value->value) {
             sol_obj_release((SolObject) value);
-            return sol_obj_retain(arguments->current->value);
+            return evaluated;
         }
         sol_obj_release((SolObject) value);
     SOL_LIST_ITR_END(arguments)
-    return sol_obj_retain(arguments->last->value);
+    return sol_obj_retain(evaluated);
 }
 
 DEFINEOP(OR) {
+    SolObject evaluated = nil;
     SOL_LIST_ITR_BEGIN(arguments)
-        SolBoolean value = sol_bool_value_of(arguments->current->value);
+        sol_obj_release(evaluated);
+        evaluated = sol_obj_evaluate(arguments->current->value);
+        SolBoolean value = sol_bool_value_of(evaluated);
         if (value->value) {
             sol_obj_release((SolObject) value);
-            return sol_obj_retain(arguments->current->value);
+            return evaluated;
         }
         sol_obj_release((SolObject) value);
     SOL_LIST_ITR_END(arguments)
-    return sol_obj_retain(arguments->last->value);
+    return sol_obj_retain(evaluated);
 }
 
 DEFINEOP(EQUALITY) {

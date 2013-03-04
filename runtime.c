@@ -102,7 +102,11 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
     REGISTER_OP(and, AND);
+    sol_obj_set_prop((SolObject) OBJ_AND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_AND, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(or, OR);
+    sol_obj_set_prop((SolObject) OBJ_OR, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_OR, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(=, EQUALITY);
     REGISTER_OP(<, LESS_THAN);
     REGISTER_OP(>, GREATER_THAN);
