@@ -127,7 +127,7 @@ int sol_list_index_of(SolList list, SolObject obj) {
 
 SolList sol_list_slice(SolList list, int start, int end) {
     // create new list
-    SolList new_list = sol_list_create(list->object_mode);
+    SolList new_list = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
     
     // walk to starting position
     sol_list_node* node = list->first;
@@ -146,7 +146,7 @@ SolList sol_list_slice(SolList list, int start, int end) {
 
 SolList sol_list_slice_s(SolList list, int start) {
     // create new list
-    SolList new_list = sol_list_create(list->object_mode);
+    SolList new_list = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
     
     // walk to starting position
     sol_list_node* node = list->first;
@@ -165,7 +165,7 @@ SolList sol_list_slice_s(SolList list, int start) {
 
 SolList sol_list_slice_e(SolList list, int end) {
     // create new list
-    SolList new_list = sol_list_create(list->object_mode);
+    SolList new_list = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
     
     // copy nodes
     sol_list_node* node = list->first;

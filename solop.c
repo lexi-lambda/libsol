@@ -125,7 +125,9 @@ DEFINEOP(EVALUATE) {
 DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) arguments->first->value;
     SolList statements = sol_list_slice_s(arguments, 1);
-    return sol_obj_retain((SolObject) sol_func_create(parameters, statements));
+    SolFunction func = (SolFunction) sol_obj_retain((SolObject) sol_func_create(parameters, statements));
+    sol_obj_release((SolObject) statements);
+    return (SolObject) func;
 }
 
 DEFINEOP(LISTEN) {
