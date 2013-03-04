@@ -4,7 +4,6 @@
 #include "soltoken.h"
 
 TokenPoolEntry sol_token_resolve_entry(char* token);
-static inline void sol_token_entry_delete(TokenPoolEntry entry);
 
 TokenPool local_token_pool = NULL;
 
@@ -37,7 +36,11 @@ void sol_token_pool_pop() {
     if (old_token_pool->pool != NULL) {
         TokenPoolEntry current_token, tmp;
         HASH_ITER(hh, old_token_pool->pool, current_token, tmp) {
-            sol_token_entry_delete(current_token);
+            HASH_DEL(old_token_pool->pool, current_token);
+            sol_obj_release(current_token->binding->value);
+            if (--current_token->binding->retain_count <= 0) free(current_token->binding);
+            free(current_token->identifier);
+            free(current_token);
         }
     }
     free(old_token_pool);
@@ -148,12 +151,4 @@ TokenPoolEntry sol_token_resolve_entry(char* token) {
 SolObject sol_token_resolve(char* token) {
     TokenPoolEntry resolved_token = sol_token_resolve_entry(token);
     return resolved_token == NULL ? NULL : sol_obj_retain(resolved_token->binding->value);
-}
-
-static inline void sol_token_entry_delete(TokenPoolEntry entry) {
-    HASH_DEL(local_token_pool->pool, entry);
-    sol_obj_release(entry->binding->value);
-    if (--entry->binding->retain_count <= 0) free(entry->binding);
-    free(entry->identifier);
-    free(entry);
 }
