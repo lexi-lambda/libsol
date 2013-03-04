@@ -84,6 +84,8 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(exit, EXIT);
     REGISTER_OP(bind, BIND);
     sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    REGISTER_OP(bound?, BOUND);
+    sol_obj_set_prop((SolObject) OBJ_BOUND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);
     sol_obj_set_prop((SolObject) OBJ_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(define, DEFINE);

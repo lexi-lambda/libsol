@@ -31,6 +31,7 @@ extern const SolOperatorRef OP_MOD;
 extern const SolOperatorRef OP_REQUIRE;
 extern const SolOperatorRef OP_EXIT;
 extern const SolOperatorRef OP_BIND;
+extern const SolOperatorRef OP_BOUND;
 extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;

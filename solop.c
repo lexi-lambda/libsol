@@ -95,6 +95,13 @@ DEFINEOP(BIND) {
     return result;
 }
 
+DEFINEOP(BOUND) {
+    SolObject resolved = sol_token_resolve(((SolToken) arguments->first->value)->identifier);
+    SolObject result = sol_obj_retain((SolObject) sol_bool_create(resolved != NULL));
+    sol_obj_release(resolved);
+    return result;
+}
+
 DEFINEOP(SET) {
     SolToken token = (SolToken) arguments->first->value;
     SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
