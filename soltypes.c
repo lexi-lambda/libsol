@@ -11,7 +11,7 @@ SolNumber sol_num_create(double value) {
 }
 
 SolString sol_string_create(char* value) {
-    return (SolString) sol_obj_clone_type((SolObject) Number, &(struct sol_string_raw){
+    return (SolString) sol_obj_clone_type((SolObject) String, &(struct sol_string_raw){
             DATA_TYPE_STR,
             strdup(value)
         }, sizeof(sol_string));
