@@ -4,6 +4,7 @@
 #include "soltoken.h"
 
 TokenPoolEntry sol_token_resolve_entry(char* token);
+static inline void sol_token_entry_delete(TokenPoolEntry entry);
 
 TokenPool local_token_pool = NULL;
 
@@ -36,11 +37,7 @@ void sol_token_pool_pop() {
     if (old_token_pool->pool != NULL) {
         TokenPoolEntry current_token, tmp;
         HASH_ITER(hh, old_token_pool->pool, current_token, tmp) {
-            sol_obj_release(current_token->binding->value);
-            free(current_token->identifier);
-            if (--current_token->binding->retain_count <= 0) free(current_token->binding);
-            HASH_DEL(old_token_pool->pool, current_token);
-            free(current_token);
+            sol_token_entry_delete(current_token);
         }
     }
     free(old_token_pool);
@@ -96,7 +93,11 @@ void sol_token_register(char* token, SolObject obj) {
         if (--new_token->binding->retain_count <= 0) free(new_token->binding);
     }
     // bind to existing binding if the object is a token
-    if (obj->type_id == TYPE_SOL_TOKEN) {
+    if (obj->type_id == TYPE_SOL_TOKEN && !strcmp(((SolToken) obj)->identifier, "undefined")) {
+        sol_obj_release(obj);
+        obj = NULL;
+    }
+    if (obj != NULL && obj->type_id == TYPE_SOL_TOKEN) {
         TokenPoolEntry resolved_object = sol_token_resolve_entry(((SolToken) obj)->identifier);
         if (resolved_object != NULL) {
             new_token->binding = resolved_object->binding;
@@ -129,6 +130,7 @@ void sol_token_update(char* token, SolObject obj) {
 }
 
 TokenPoolEntry sol_token_resolve_entry(char* token) {
+    if (!strcmp(token, "undefined")) return NULL;
     // loop through token pools to find the token
     TokenPool current_pool = local_token_pool;
     do {
@@ -146,4 +148,12 @@ TokenPoolEntry sol_token_resolve_entry(char* token) {
 SolObject sol_token_resolve(char* token) {
     TokenPoolEntry resolved_token = sol_token_resolve_entry(token);
     return resolved_token == NULL ? NULL : sol_obj_retain(resolved_token->binding->value);
+}
+
+static inline void sol_token_entry_delete(TokenPoolEntry entry) {
+    HASH_DEL(local_token_pool->pool, entry);
+    sol_obj_release(entry->binding->value);
+    if (--entry->binding->retain_count <= 0) free(entry->binding);
+    free(entry->identifier);
+    free(entry);
 }

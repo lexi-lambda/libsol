@@ -21,12 +21,13 @@ void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data,
 }
 
 SolObject sol_obj_retain(SolObject obj) {
-    obj->retain_count++;
+    if (obj != NULL)
+        obj->retain_count++;
     return obj;
 }
 
 void sol_obj_release(SolObject obj) {
-    if (obj == nil) return;
+    if (obj == NULL || obj == nil) return;
     obj->retain_count--;
     if (obj->retain_count <= 0) {
         // release all properties
@@ -183,6 +184,7 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
 }
 
 char* sol_obj_to_string(SolObject obj) {
+    if (obj == NULL) return strdup("undefined");
     switch (obj->type_id) {
         case TYPE_SOL_OBJ:
             return strdup("Object");
