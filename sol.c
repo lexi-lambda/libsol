@@ -150,7 +150,7 @@ SolObject sol_obj_evaluate(SolObject obj) {
                         return nil;
                 }
             } else {
-                return (SolObject) list;
+                return sol_obj_retain((SolObject) list);
             }
         }
         case TYPE_SOL_TOKEN:
