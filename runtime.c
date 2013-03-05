@@ -91,8 +91,6 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(define, DEFINE);
     sol_obj_set_prop((SolObject) OBJ_DEFINE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(evaluate, EVALUATE);
-    sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
-    sol_obj_set_prop((SolObject) OBJ_EVALUATE, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(^, LAMBDA);
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
