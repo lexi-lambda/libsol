@@ -82,7 +82,7 @@ TokenMap sol_token_pool_snapshot() {
     return snapshot;
 }
 
-void sol_token_register(char* token, SolObject obj) {
+SolObject sol_token_register(char* token, SolObject obj) {
     TokenPoolEntry new_token;
     sol_obj_retain(obj);
     // check if entry already exists
@@ -107,15 +107,16 @@ void sol_token_register(char* token, SolObject obj) {
             new_token->binding->retain_count++;
             sol_obj_retain(new_token->binding->value);
             sol_obj_release(obj);
-            return;
+            return new_token->binding->value;
         }
     }
     new_token->binding = malloc(sizeof(*new_token->binding));
     new_token->binding->value = obj;
     new_token->binding->retain_count = 1;
+    return obj;
 }
 
-void sol_token_update(char* token, SolObject obj) {
+SolObject sol_token_update(char* token, SolObject obj) {
     // loop through token pools to find the token
     TokenPool current_pool = local_token_pool;
     do {
@@ -127,9 +128,10 @@ void sol_token_update(char* token, SolObject obj) {
                 sol_obj_release(resolved_token->binding->value);
             }
             resolved_token->binding->value = obj;
-            return;
+            return obj;
         }
     } while ((current_pool = current_pool->next) != NULL);
+    return NULL;
 }
 
 TokenPoolEntry sol_token_resolve_entry(char* token) {

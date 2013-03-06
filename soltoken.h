@@ -85,15 +85,17 @@ TokenMap sol_token_pool_snapshot();
  * Registers a token in the current pool.
  * @param token
  * @param obj
+ * @return the value of the created binding (not retained)
  */
-void sol_token_register(char* token, SolObject obj);
+SolObject sol_token_register(char* token, SolObject obj);
 
 /**
  * Sets the most local token binding to point to obj.
  * @param token
  * @param obj
+ * @return the value of the updated binding (not retained)
  */
-void sol_token_update(char* token, SolObject obj);
+SolObject sol_token_update(char* token, SolObject obj);
 
 /**
  * Resolves a token to a value.

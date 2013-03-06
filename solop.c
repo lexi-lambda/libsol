@@ -90,8 +90,9 @@ DEFINEOP(EXIT) {
 
 DEFINEOP(BIND) {
     SolToken token = (SolToken) arguments->first->value;
-    SolObject result = arguments->length > 1 ? sol_obj_retain(arguments->first->next->value) : nil;
-    sol_token_register(token->identifier, result);
+    SolObject evaluated = arguments->length > 1 ? sol_obj_retain(arguments->first->next->value) : nil;
+    SolObject result = sol_obj_retain(sol_token_register(token->identifier, evaluated));
+    sol_obj_release(evaluated);
     return result;
 }
 
@@ -104,8 +105,9 @@ DEFINEOP(BOUND) {
 
 DEFINEOP(SET) {
     SolToken token = (SolToken) arguments->first->value;
-    SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
-    sol_token_update(token->identifier, result);
+    SolObject evaluated = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
+    SolObject result = sol_obj_retain(sol_token_update(token->identifier, evaluated));
+    sol_obj_release(evaluated);
     return result;
 }
 
