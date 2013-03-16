@@ -10,6 +10,7 @@
 
 #include "solop.h"
 
+#define SOLAR_DEFINITION(name) SolObject name (SolList arguments, SolObject self)
 
 void solar_load(char* filename);
 

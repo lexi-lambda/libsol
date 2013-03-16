@@ -78,11 +78,18 @@ void solar_load(char* filename) {
                     // find all exported symbols
                     yaml_node_t* symbol_el;
                     for (int k = 0; (symbol_el = yaml_node_get_element(&yaml_document, symbol_list, k)) != NULL; k++) {
-                        char* symbol_function = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "function"));
                         char* symbol_name = yaml_node_get_value(yaml_node_get_child(&yaml_document, symbol_el, "name"));
+                        yaml_node_t* symbol_use_function_node = yaml_node_get_child(&yaml_document, symbol_el, "function");
+                        char* symbol_function;
+                        if (symbol_use_function_node) {
+                            symbol_function = strdup(yaml_node_get_value(symbol_use_function_node));
+                        } else {
+                            asprintf(&symbol_function, "%s_%s", symbol_object, symbol_name);
+                        }
                         yaml_node_t* symbol_use_prototype_node = yaml_node_get_child(&yaml_document, symbol_el, "use-prototype");
                         bool symbol_use_prototype = symbol_use_prototype_node ? !strcmp(yaml_node_get_value(symbol_use_prototype_node), "true") : false;
                         solar_register_function(symbol_object, symbol_name, (SolOperatorRef) dlsym(native_dl, symbol_function), symbol_use_prototype);
+                        free(symbol_function);
                     }
                 }
             }
