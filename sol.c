@@ -8,9 +8,9 @@
 #include "solop.h"
 #include "soltypes.h"
 
-const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 0, NULL, NULL, NULL };
+const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 0, NULL, NULL, NULL, NULL };
 
-void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data,  size_t size, char* token) {
+void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data, size_t size, char* token) {
     SolObject new_obj = malloc(size);
     memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
     memcpy(new_obj + 1, default_data, size - sizeof(sol_obj));

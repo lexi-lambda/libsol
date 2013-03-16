@@ -22,6 +22,7 @@ typedef enum {
 } obj_type;
 
 struct token_pool_entry;
+struct sol_event_listener;
 
 typedef struct sol_obj {
     obj_type type_id;
@@ -29,6 +30,7 @@ typedef struct sol_obj {
     struct sol_obj* parent;
     struct token_pool_entry* prototype;
     struct token_pool_entry* properties;
+    struct sol_event_listener* listeners;
 } sol_obj;
 
 extern const sol_obj DEFAULT_OBJECT;

@@ -5,11 +5,10 @@
 #include "uthash.h"
 
 static struct event_base* base;
-static struct sol_event_initializer* initializers = NULL;
-static struct sol_event_listener* listeners = NULL;
+static unsigned int listener_count = 0;
 
 bool sol_event_has_work(void) {
-    return listeners != NULL;
+    return listener_count > 0;
 }
 
 void sol_event_loop_create(void) {
@@ -33,29 +32,16 @@ void sol_event_loop_add_once(struct sol_event* event) {
     event_base_once(base, event->fd, event->flags, event->callback, event->arg, event->timeout);
 }
 
-void sol_event_initializer_register(char* type, sol_event_initializer_fn initializer) {
-    struct sol_event_initializer* new_initializer;
-    // check if already exists
-    HASH_FIND_STR(initializers, type, new_initializer);
-    if (new_initializer != NULL) {
-        fprintf(stderr, "Fatal error: conflict in registering custom event type '%s'.", type);
-        exit(EXIT_FAILURE);
-    }
-    new_initializer = malloc(sizeof(*new_initializer));
-    new_initializer->type = strdup(type);
-    new_initializer->intializer = initializer;
-    HASH_ADD_KEYPTR(hh, initializers, new_initializer->type, strlen(new_initializer->type), new_initializer);
-}
-
-void sol_event_listener_add(char* type, SolFunction callback) {
+void sol_event_listener_add(SolObject object, char* type, SolFunction callback) {
+    listener_count++;
     struct sol_event_listener* new_listener;
     // check if already exists
-    HASH_FIND_STR(listeners, type, new_listener);
+    HASH_FIND_STR(object->listeners, type, new_listener);
     if (new_listener == NULL) {
         new_listener = malloc(sizeof(*new_listener));
         new_listener->type = strdup(type);
         new_listener->listeners = NULL;
-        HASH_ADD_KEYPTR(hh, listeners, new_listener->type, strlen(new_listener->type), new_listener);
+        HASH_ADD_KEYPTR(hh, object->listeners, new_listener->type, strlen(new_listener->type), new_listener);
     }
     if (new_listener->listeners == NULL) {
         new_listener->listeners = new_listener->listeners_end = malloc(sizeof(*new_listener->listeners_end));
@@ -65,21 +51,12 @@ void sol_event_listener_add(char* type, SolFunction callback) {
     }
     new_listener->listeners_end->callback = (SolFunction) sol_obj_retain((SolObject) callback);
     new_listener->listeners_end->next = NULL;
-    // handle custom event initializers
-    struct sol_event_initializer* initializer;
-    HASH_FIND_STR(initializers, type, initializer);
-    if (initializer != NULL) {
-        struct sol_event event = initializer->intializer();
-        sol_event_loop_add(&event);
-        HASH_DEL(initializers, initializer);
-        free(initializer->type);
-        free(initializer);
-    }
 }
 
-void sol_event_listener_remove(char* type, SolFunction callback) {
+void sol_event_listener_remove(SolObject object, char* type, SolFunction callback) {
+    listener_count--;
     struct sol_event_listener* listener;
-    HASH_FIND_STR(listeners, type, listener);
+    HASH_FIND_STR(object->listeners, type, listener);
     if (listener == NULL) return;
     
     struct sol_event_listener_list* listener_list_prev = NULL;
@@ -101,9 +78,9 @@ void sol_event_listener_remove(char* type, SolFunction callback) {
     }
 }
 
-void sol_event_listener_dispatch(char* type, SolEvent event) {
+void sol_event_listener_dispatch(SolObject object, char* type, SolEvent event) {
     struct sol_event_listener* listener;
-    HASH_FIND_STR(listeners, type, listener);
+    HASH_FIND_STR(object->listeners, type, listener);
     if (listener == NULL) return;
     
     SolList args = (SolList) sol_obj_retain((SolObject) sol_list_create(false));

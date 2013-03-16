@@ -36,9 +36,6 @@ extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_LAMBDA;
-// EVENT
-extern const SolOperatorRef OP_LISTEN;
-extern const SolOperatorRef OP_DISPATCH;
 // CONVERSION
 extern const SolOperatorRef OP_TO_TOKEN;
 // I/O
@@ -65,6 +62,9 @@ extern const SolOperatorRef OP_OBJECT_SET;
 extern const SolOperatorRef OP_PROTOTYPE_GET;
 extern const SolOperatorRef OP_PROTOTYPE_SET;
 extern const SolOperatorRef OP_OBJECT_CLONE;
+// EVENT
+extern const SolOperatorRef OP_OBJECT_LISTEN;
+extern const SolOperatorRef OP_OBJECT_DISPATCH;
 
 
 /**

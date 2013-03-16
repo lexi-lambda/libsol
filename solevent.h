@@ -25,13 +25,6 @@ struct sol_event {
     struct timeval* timeout;
 };
 
-typedef struct sol_event (*sol_event_initializer_fn)(void);
-struct sol_event_initializer {
-    char* type;
-    sol_event_initializer_fn intializer;
-    UT_hash_handle hh;
-};
-
 struct sol_event_listener_list {
     SolFunction callback;
     struct sol_event_listener_list* next;
@@ -52,10 +45,8 @@ void sol_event_loop_stop(void);
 void sol_event_loop_add(struct sol_event* event);
 void sol_event_loop_add_once(struct sol_event* event);
 
-void sol_event_initializer_register(char* type, sol_event_initializer_fn initializer);
-
-void sol_event_listener_add(char* type, SolFunction callback);
-void sol_event_listener_remove(char* type, SolFunction callback);
-void sol_event_listener_dispatch(char* type, SolEvent event);
+void sol_event_listener_add(SolObject object, char* type, SolFunction callback);
+void sol_event_listener_remove(SolObject object, char* type, SolFunction callback);
+void sol_event_listener_dispatch(SolObject object, char* type, SolEvent event);
 
 #endif

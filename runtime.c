@@ -94,8 +94,6 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(^, LAMBDA);
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
-    REGISTER_OP(listen, LISTEN);
-    REGISTER_OP(dispatch, DISPATCH);
     REGISTER_OP(->token, TO_TOKEN);
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
@@ -124,12 +122,11 @@ static inline void sol_runtime_init_operators() {
     REGISTER_METHOD(Object, @set, PROTOTYPE_SET);
     sol_obj_set_prop((SolObject) OBJ_PROTOTYPE_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
+    REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
+    REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
 }
 
 void sol_runtime_destroy() {
-    // wait for events to complete
-    if (sol_event_has_work())
-        sol_event_loop_run();
 }
 
 uint64_t htonll(uint64_t value);
@@ -176,6 +173,9 @@ SolObject sol_runtime_execute(unsigned char* data) {
         ans = sol_obj_evaluate(obj);
         sol_obj_release(obj);
     }
+    
+    // wait for events to complete
+    sol_event_loop_run();
     
     return ans;
 }

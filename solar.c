@@ -15,7 +15,7 @@ struct solar_module {
 static struct solar_module* loaded_modules = NULL;
 
 static inline void solar_register_function(char* object, char* name, SolOperatorRef function, bool on_prototype);
-static inline void solar_register_event(char* object, char* type_name, char* type_value, sol_event_initializer_fn initializer);
+static inline void solar_register_event(char* object, char* type_name, char* type_value);
 
 /** libyaml wrapper functions **/
 static inline char* yaml_node_get_value(yaml_node_t* node);
@@ -100,8 +100,7 @@ void solar_load(char* filename) {
                         char* event_type_name = yaml_node_get_value(yaml_document_get_node(&yaml_document, event_type_pair->key));
                         yaml_node_t* event_type = yaml_document_get_node(&yaml_document, event_type_pair->value);
                         char* event_type_value = yaml_node_get_value(yaml_node_get_child(&yaml_document, event_type, "type"));
-                        char* event_initializer = yaml_node_get_value(yaml_node_get_child(&yaml_document, event_type, "initializer"));
-                        solar_register_event(event_object, event_type_name, event_type_value, event_initializer ? (sol_event_initializer_fn) dlsym(native_dl, event_initializer) : NULL);
+                        solar_register_event(event_object, event_type_name, event_type_value);
                     }
                 }
             }
@@ -147,15 +146,13 @@ static inline void solar_register_function(char* object, char* name, SolOperator
     (use_prototype ? sol_obj_set_proto : sol_obj_set_prop)(parent, name, (SolObject) operator);
 }
 
-static inline void solar_register_event(char* object, char* type_name, char* type_value, sol_event_initializer_fn initializer) {
+static inline void solar_register_event(char* object, char* type_name, char* type_value) {
     SolObject parent = sol_token_resolve(object);
     if (parent == NULL) {
         parent = sol_obj_clone(Event);
         sol_token_register(object, parent);
     }
     sol_obj_set_prop(parent, type_name, (SolObject) sol_string_create(type_value));
-    if (initializer)
-        sol_event_initializer_register(type_value, initializer);
 }
 
 static inline char* yaml_node_get_value(yaml_node_t* node) {
