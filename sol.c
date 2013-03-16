@@ -194,8 +194,18 @@ char* sol_obj_to_string(SolObject obj) {
             SolDatatype datatype = (SolDatatype) obj;
             switch (datatype->type_id) {
                 case DATA_TYPE_NUM: {
-                    char* ret;
-                    asprintf(&ret, "%f", ((SolNumber) datatype)->value);
+                    char* value;
+                    asprintf(&value, "%.8f", ((SolNumber) datatype)->value);
+                    char* value_end = value + strlen(value) - 1;
+                    while (*value_end == '0') {
+                        *value_end = '\0';
+                        value_end--;
+                    }
+                    if (*value_end == '.') {
+                        *value_end = '\0';
+                    }
+                    char* ret = strdup(value);
+                    free(value);
                     return ret;
                 }
                 case DATA_TYPE_STR: {
