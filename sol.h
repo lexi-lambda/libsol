@@ -38,7 +38,14 @@ extern const sol_obj DEFAULT_OBJECT;
 typedef sol_obj* SolObject;
 
 extern SolObject Object;
+extern SolObject RawObject;
 extern SolObject nil;
+
+/**
+ * Creates a new "raw" object with no parent and only the get and set methods.
+ * @return object
+ */
+SolObject sol_obj_create_raw();
 
 /**
  * Creates a new object from the given parent with the given type.

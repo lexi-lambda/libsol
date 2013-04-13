@@ -15,6 +15,7 @@
 #include "solevent.h"
 
 SolObject Object;
+SolObject RawObject;
 SolToken Token;
 SolFunction Function;
 SolList List;
@@ -37,6 +38,11 @@ void sol_runtime_init() {
     Object = malloc(sizeof(*Object));
     memcpy(Object, &DEFAULT_OBJECT, sizeof(*Object));
     sol_token_register("Object", Object);
+    sol_obj_retain(Object);
+    
+    RawObject = malloc(sizeof(*RawObject));
+    memcpy(RawObject, &DEFAULT_OBJECT, sizeof(*RawObject));
+    sol_obj_retain(RawObject);
     
     // create token as object, then switch to token to avoid early resolution when binding in pool
     Token = (SolToken) sol_obj_create_global(Object, TYPE_SOL_OBJ, &(struct sol_token_raw){ NULL }, sizeof(*Token), "Token");
@@ -124,6 +130,9 @@ static inline void sol_runtime_init_operators() {
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
+    
+    sol_obj_set_proto(RawObject, "get", (SolObject) OBJ_OBJECT_GET);
+    sol_obj_set_proto(RawObject, "set", (SolObject) OBJ_OBJECT_SET);
 }
 
 void sol_runtime_destroy() {
@@ -183,13 +192,27 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
     switch (**data) {
         case 0x1: {
             ++*data;
-            SolObject object = sol_obj_clone(Object);
-            uint64_t length = sol_runtime_execute_decode_length(data);
-            for (; length > 0; length--) {
-                SolString key = (SolString) sol_runtime_execute_get_object(data);
+            uint64_t type_length = sol_runtime_execute_decode_length(data);
+            SolObject object;
+            if (type_length > 0) {
+                char* type_name = memcpy(malloc(sizeof(*type_name) * type_length + 1), *data, sizeof(*type_name) * type_length);
+                type_name[type_length] = '\0';
+                *data += sizeof(*type_name) * type_length;
+                SolObject parent = sol_token_resolve(type_name);
+                free(type_name);
+                object = sol_obj_clone(parent);
+            } else {
+                object = sol_obj_create_raw();
+            }
+            uint64_t object_length = sol_runtime_execute_decode_length(data);
+            for (int i = 0; i < object_length; i++) {
+                uint64_t key_length = sol_runtime_execute_decode_length(data);
+                char* key = memcpy(malloc(sizeof(*key) * key_length + 1), *data, sizeof(*key) * key_length);
+                key[key_length] = '\0';
+                *data += sizeof(*key) * key_length;
                 SolObject value = sol_runtime_execute_get_object(data);
-                sol_obj_set_prop(object, key->value, value);
-                sol_obj_release((SolObject) key);
+                sol_obj_set_prop(object, key, value);
+                free(key);
                 sol_obj_release(value);
             }
             return object;
@@ -220,7 +243,7 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             ++*data;
             uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
-            value[sizeof(*value) * length] = '\0';
+            value[length] = '\0';
             *data += sizeof(*value) * length;
             SolToken token = (SolToken) sol_obj_retain((SolObject) sol_token_create(value));
             free(value);
@@ -244,7 +267,7 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             ++*data;
             uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
-            value[sizeof(*value) * length] = '\0';
+            value[length] = '\0';
             *data += sizeof(*value) * length;
             SolString string = (SolString) sol_obj_retain((SolObject) sol_string_create(value));
             free(value);

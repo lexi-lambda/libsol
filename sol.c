@@ -10,6 +10,10 @@
 
 const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 0, NULL, NULL, NULL, NULL };
 
+SolObject sol_obj_create_raw() {
+    return sol_obj_clone(RawObject);
+}
+
 void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data, size_t size, char* token) {
     SolObject new_obj = malloc(size);
     memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
@@ -61,6 +65,7 @@ void sol_obj_release(SolObject obj) {
             }
             case TYPE_SOL_FUNC: {
                 SolFunction func = (SolFunction) obj;
+                if (func->is_operator) break;
                 TokenPoolEntry current_token, tmp;
                 HASH_ITER(hh, func->closure_scope, current_token, tmp) {
                     sol_obj_release(current_token->binding->value);
