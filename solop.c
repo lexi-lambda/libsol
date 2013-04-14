@@ -138,7 +138,7 @@ DEFINEOP(TO_TOKEN) {
 
 DEFINEOP(PRINT) {
     SolObject argument = sol_obj_retain(arguments->first->value);
-    char* string = (argument->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) argument)->type_id == DATA_TYPE_STR) ? strdup(((SolString) argument)->value) : sol_obj_to_string(argument);
+    char* string = (argument && argument->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) argument)->type_id == DATA_TYPE_STR) ? strdup(((SolString) argument)->value) : sol_obj_to_string(argument);
     printf("%s\n", string);
     free(string);
     return argument;
@@ -228,7 +228,7 @@ DEFINEOP(CAT) {
     int len = 1;
     SolList strings = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
     SOL_LIST_ITR_BEGIN(arguments)
-        char* string_value = (arguments->current->value->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) arguments->current->value)->type_id == DATA_TYPE_STR) ? strdup(((SolString) arguments->current->value)->value) : sol_obj_to_string(arguments->current->value);
+        char* string_value = (arguments->current->value && arguments->current->value->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) arguments->current->value)->type_id == DATA_TYPE_STR) ? strdup(((SolString) arguments->current->value)->value) : sol_obj_to_string(arguments->current->value);
         sol_list_add_obj(strings, (SolObject) sol_string_create(string_value));
         len += strlen(string_value);
         free(string_value);
