@@ -237,7 +237,7 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             SolFunction function = sol_func_create(parameters, statements);
             sol_obj_release((SolObject) parameters);
             sol_obj_release((SolObject) statements);
-            return (SolObject) function;
+            return sol_obj_retain((SolObject) function);
         }
         case 0x4: {
             ++*data;
