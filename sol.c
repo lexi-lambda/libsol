@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "sol.h"
 #include "uthash.h"
@@ -188,11 +189,48 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
     }
 }
 
+#define strbuild(buff, offset, buff_size, out, format, ...) \
+  do {                                                      \
+    snprintf(NULL, 0, format "%n", ##__VA_ARGS__, &out);    \
+    while (out > buff_size - offset) {                      \
+        buff_size *= 2;                                     \
+        realloc(buff, buff_size);                           \
+    }                                                       \
+    sprintf(buff + offset, format, ##__VA_ARGS__);          \
+    offset += out;                                          \
+  } while (1);
+static int sol_obj_indent_level = 0;
 char* sol_obj_to_string(SolObject obj) {
     if (obj == NULL) return strdup("undefined");
     switch (obj->type_id) {
-        case TYPE_SOL_OBJ:
-            return strdup("Object");
+        case TYPE_SOL_OBJ: {
+            size_t buff_size = 128;
+            char* buff = malloc(buff_size);
+            off_t buff_offset = 0;
+            int buff_tmp;
+            if (obj->parent == RawObject) {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "{\n");
+            } else {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "@{\n");
+            }
+            sol_obj_indent_level++;
+            TokenPoolEntry el, tmp;
+            HASH_ITER(hh, obj->properties, el, tmp) {
+                char* key = el->identifier;
+                char* value = sol_obj_to_string(el->binding->value);
+                for (int i = 0; i < sol_obj_indent_level; i++) {
+                    strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
+                }
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "%s %s\n", key, value);
+                free(value);
+            }
+            sol_obj_indent_level--;
+            for (int i = 0; i < sol_obj_indent_level; i++) {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
+            }
+            strbuild(buff, buff_offset, buff_size, buff_tmp, "}");
+            return buff;
+        }
         case TYPE_SOL_FUNC:
             return strdup("Function");
         case TYPE_SOL_DATATYPE: {
@@ -238,7 +276,7 @@ char* sol_obj_to_string(SolObject obj) {
                 SOL_LIST_ITR_BEGIN(list)
                     char* obj = sol_obj_to_string(list->current->value);
                     while (str + strlen(obj) - buffer > buffer_len) {
-                        buffer = reallocf(buffer, buffer_len *= 2);
+                        buffer = realloc(buffer, buffer_len *= 2);
                         str = buffer + strlen(buffer);
                     }
                     str += sprintf(str, "%s", obj);
