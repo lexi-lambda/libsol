@@ -18,7 +18,8 @@ typedef enum {
     TYPE_SOL_LIST,
     TYPE_SOL_FUNC,
     TYPE_SOL_DATATYPE,
-    TYPE_SOL_TOKEN
+    TYPE_SOL_TOKEN,
+    TYPE_SOL_OBJ_FROZEN
 } obj_type;
 
 struct token_pool_entry;
@@ -32,14 +33,16 @@ typedef struct sol_obj {
     struct token_pool_entry* properties;
     struct sol_event_listener* listeners;
 } sol_obj;
-
 extern const sol_obj DEFAULT_OBJECT;
-
 typedef sol_obj* SolObject;
-
 extern SolObject Object;
 extern SolObject RawObject;
 extern SolObject nil;
+
+STRUCT_EXTEND(sol_obj, sol_obj_frozen,
+    SolObject value;
+);
+typedef sol_obj_frozen* SolObjectFrozen;
 
 /**
  * Creates a new "raw" object with no parent and only the get and set methods.
@@ -96,6 +99,14 @@ void* sol_obj_clone_type(SolObject obj, void* default_data, size_t size);
  * @return object
  */
 SolObject sol_obj_evaluate(SolObject obj);
+
+/**
+ * "Freezes" an object, creating a reference that evaluates to the original. The returned object has a
+ * retain count of 0 and will need to be manually retained.
+ * @param obj
+ * @return frozen object
+ */
+SolObjectFrozen sol_obj_freeze(SolObject obj);
 
 /**
  * Tests to see if two objects are considered equal.

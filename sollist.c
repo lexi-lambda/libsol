@@ -15,6 +15,14 @@ SolList sol_list_create(bool object_mode) {
         }, sizeof(sol_list));
 }
 
+SolListFrozen sol_list_create_frozen(bool object_mode) {
+    SolListFrozen frozen = sol_obj_clone_type(Object, &(struct sol_list_frozen_raw){
+        (SolList) sol_obj_retain((SolObject) sol_list_create(object_mode))
+    }, sizeof(*frozen));
+    frozen->super.type_id = TYPE_SOL_OBJ_FROZEN;
+    return frozen;
+}
+
 void sol_list_add_obj(SolList list, SolObject obj) {
     sol_list_node* new_node = malloc(sizeof(*new_node));
     new_node->value = sol_obj_retain(obj);

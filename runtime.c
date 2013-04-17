@@ -57,7 +57,7 @@ void sol_runtime_init() {
     Event = sol_obj_clone(Object);
     sol_token_register("Event", Event);
     
-    nil = (SolObject) sol_list_create(false);
+    nil = (SolObject) sol_list_create_frozen(false);
     sol_token_register("nil", nil);
     
     // set up prototypes
@@ -89,14 +89,13 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(require, REQUIRE);
     REGISTER_OP(exit, EXIT);
     REGISTER_OP(bind, BIND);
-    sol_obj_set_prop((SolObject) OBJ_BIND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(bound?, BOUND);
-    sol_obj_set_prop((SolObject) OBJ_BOUND, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(set, SET);
-    sol_obj_set_prop((SolObject) OBJ_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(define, DEFINE);
-    sol_obj_set_prop((SolObject) OBJ_DEFINE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_OP(evaluate, EVALUATE);
+    REGISTER_OP(freeze, FREEZE);
+    sol_obj_set_prop((SolObject) OBJ_FREEZE, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_FREEZE, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(^, LAMBDA);
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
@@ -116,17 +115,12 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(>=, GREATER_THAN_EQUALITY);
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
-    sol_obj_set_prop((SolObject) OBJ_LOOP, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(cat, CAT);
     
     REGISTER_METHOD(Object, get, OBJECT_GET);
-    sol_obj_set_prop((SolObject) OBJ_OBJECT_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, set, OBJECT_SET);
-    sol_obj_set_prop((SolObject) OBJ_OBJECT_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, @get, PROTOTYPE_GET);
-    sol_obj_set_prop((SolObject) OBJ_PROTOTYPE_GET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, @set, PROTOTYPE_SET);
-    sol_obj_set_prop((SolObject) OBJ_PROTOTYPE_SET, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
@@ -211,22 +205,34 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
                 key[key_length] = '\0';
                 *data += sizeof(*key) * key_length;
                 SolObject value = sol_runtime_execute_get_object(data);
-                sol_obj_set_prop(object, key, value);
+                SolObject evaluated = sol_obj_evaluate(value);
+                sol_obj_set_prop(object, key, evaluated);
                 free(key);
+                sol_obj_release(evaluated);
                 sol_obj_release(value);
             }
             return object;
         }
         case 0x2: {
             SolList list = (SolList) sol_obj_retain((SolObject) sol_list_create((bool) *++*data));
+            bool literal = (bool) *++*data;
             ++*data;
-            uint64_t freezeCount = sol_runtime_execute_decode_length(data);
-            list->freezeCount = freezeCount - 1;
             uint64_t length = sol_runtime_execute_decode_length(data);
             for (; length > 0; length--) {
                 SolObject value = sol_runtime_execute_get_object(data);
-                sol_list_add_obj(list, value);
+                if (literal) {
+                    SolObject evaluated = sol_obj_evaluate(value);
+                    sol_list_add_obj(list, evaluated);
+                    sol_obj_release(evaluated);
+                } else {
+                    sol_list_add_obj(list, value);
+                }
                 sol_obj_release(value);
+            }
+            if (literal) {
+                SolObjectFrozen frozen = (SolObjectFrozen) sol_obj_retain((SolObject) sol_obj_freeze((SolObject) list));
+                sol_obj_release((SolObject) list);
+                return (SolObject) frozen;
             }
             return (SolObject) list;
         }
@@ -277,6 +283,11 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             bool value = *++*data;
             ++*data;
             return sol_obj_retain((SolObject) sol_bool_create(value));
+        }
+        case 0x8: {
+            ++*data;
+            SolObject value = sol_runtime_execute_get_object(data);
+            return sol_obj_retain((SolObject) sol_obj_freeze(value));
         }
         case 0x0:
             return NULL;

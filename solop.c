@@ -124,6 +124,30 @@ DEFINEOP(EVALUATE) {
     return sol_obj_evaluate(arguments->first->value);
 }
 
+DEFINEOP(FREEZE) {
+    SolObject obj = arguments->first->value;
+    switch (obj->type_id) {
+        case TYPE_SOL_LIST: {
+            SolList list = (SolList) obj;
+            if (list->first->value->type_id == TYPE_SOL_TOKEN) {
+                SolObject first = sol_obj_evaluate(list->first->value);
+                if (first->type_id == TYPE_SOL_FUNC && ((SolFunction) first)->is_operator && ((SolOperator) first)->operator_ref == OP_FREEZE) {
+                    SolObject frozen = sol_obj_evaluate(obj);
+                    SolObjectFrozen ret = (SolObjectFrozen) sol_obj_retain((SolObject) sol_obj_freeze(frozen));
+                    sol_obj_release(frozen);
+                    return (SolObject) ret;
+                }
+            }
+            return sol_obj_retain(obj);
+        }
+        case TYPE_SOL_TOKEN:
+            return sol_obj_retain(obj);
+        default:
+            return sol_obj_retain((SolObject) sol_obj_freeze(arguments->first->value));
+            break;
+    }
+}
+
 DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) arguments->first->value;
     SolList statements = sol_list_slice_s(arguments, 1);
@@ -215,12 +239,12 @@ DEFINEOP(IF) {
 
 DEFINEOP(LOOP) {
     SolObject result = nil;
-    SolFunction function = (SolFunction) sol_obj_evaluate(arguments->first->next->value);
-    for (SolObject condition; sol_bool_value_of(condition = sol_obj_evaluate(arguments->first->value))->value; sol_obj_release(condition)) {
+    SolFunction condition_function = (SolFunction) arguments->first->value;
+    SolFunction body_function = (SolFunction) arguments->first->next->value;
+    for (SolObject condition; sol_bool_value_of(condition = sol_func_execute(condition_function, (SolList) nil, nil))->value; sol_obj_release(condition)) {
         sol_obj_release(result);
-        result = sol_func_execute(function, (SolList) nil, nil);
+        result = sol_func_execute(body_function, (SolList) nil, nil);
     }
-    sol_obj_release((SolObject) function);
     return result;
 }
 

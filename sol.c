@@ -95,6 +95,9 @@ void sol_obj_release(SolObject obj) {
                 free(token->identifier);
                 break;
             }
+            case TYPE_SOL_OBJ_FROZEN:
+                sol_obj_release(((SolObjectFrozen) obj)->value);
+                break;
             case TYPE_SOL_OBJ:
                 break;
         }
@@ -127,7 +130,7 @@ SolObject sol_obj_evaluate(SolObject obj) {
     // get the object type
     // (keep in mind that SolObjects' first item is an int, so
     //  we can interpret this as an int pointer)
-    obj_type type = *((int*) obj);
+    obj_type type = *((obj_type*) obj);
     switch (type) {
         case TYPE_SOL_OBJ:
         case TYPE_SOL_FUNC:
@@ -135,36 +138,44 @@ SolObject sol_obj_evaluate(SolObject obj) {
             return sol_obj_retain(obj);
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
-            if (list->freezeCount < 0) {
-                SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
-                SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
-                obj_type first_type = first_object->type_id;
-                switch (first_type) {
-                    case TYPE_SOL_FUNC: {
-                        SolFunction func = (SolFunction) first_object;
-                        SolList arguments = sol_list_slice_s(list, list->object_mode ? 2 : 1);
-                        SolObject result = sol_func_execute(func, arguments, self);
-                        sol_obj_release((SolObject) arguments);
-                        sol_obj_release(self);
-                        sol_obj_release(first_object);
-                        return result;
-                    }
-                    default:
-                        fprintf(stderr, "ERROR: Attempted to execute non-executable object.\n");
-                        sol_obj_release(self);
-                        sol_obj_release(first_object);
-                        return nil;
+            SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
+            SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
+            obj_type first_type = first_object->type_id;
+            switch (first_type) {
+                case TYPE_SOL_FUNC: {
+                    SolFunction func = (SolFunction) first_object;
+                    SolList arguments = sol_list_slice_s(list, list->object_mode ? 2 : 1);
+                    SolObject result = sol_func_execute(func, arguments, self);
+                    sol_obj_release((SolObject) arguments);
+                    sol_obj_release(self);
+                    sol_obj_release(first_object);
+                    return result;
                 }
-            } else {
-                return sol_obj_retain((SolObject) list);
+                default:
+                    fprintf(stderr, "ERROR: Attempted to execute non-executable object.\n");
+                    sol_obj_release(self);
+                    sol_obj_release(first_object);
+                    return nil;
             }
         }
-        case TYPE_SOL_TOKEN:
-            return sol_token_resolve(((SolToken) obj)->identifier);
+        case TYPE_SOL_TOKEN: {
+            SolToken token = (SolToken) obj;
+            return sol_token_resolve(token->identifier);
+        }
+        case TYPE_SOL_OBJ_FROZEN:
+            return sol_obj_retain(((SolObjectFrozen) obj)->value);
         default:
             fprintf(stderr, "WARNING: Encountered unknown obj_type.\n");
             return sol_obj_retain(obj);
     }
+}
+
+SolObjectFrozen sol_obj_freeze(SolObject obj) {
+    SolObjectFrozen frozen = sol_obj_clone_type(Object, &(struct sol_obj_frozen_raw){
+        sol_obj_retain(obj)
+    }, sizeof(*frozen));
+    frozen->super.type_id = TYPE_SOL_OBJ_FROZEN;
+    return frozen;
 }
 
 int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
@@ -198,10 +209,15 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
     }                                                       \
     sprintf(buff + offset, format, ##__VA_ARGS__);          \
     offset += out;                                          \
-  } while (1);
+  } while (0);
 static int sol_obj_indent_level = 0;
 char* sol_obj_to_string(SolObject obj) {
     if (obj == NULL) return strdup("undefined");
+    int freeze_count = 0;
+    while (obj->type_id == TYPE_SOL_OBJ_FROZEN) {
+        freeze_count++;
+        obj = ((SolObjectFrozen) obj)->value;
+    }
     switch (obj->type_id) {
         case TYPE_SOL_OBJ: {
             size_t buff_size = 128;
@@ -269,8 +285,13 @@ char* sol_obj_to_string(SolObject obj) {
                 char* str = buffer;
                 
                 if (list->object_mode) str += sprintf(str, "@");
-                if (list->freezeCount < 0) str += sprintf(str, "[");
-                else str += sprintf(str, "(");
+                if (freeze_count <= 0) str += sprintf(str, "[");
+                else {
+                    for (int i = 1; i < freeze_count; i++) {
+                        str += sprintf(str, ":");
+                    }
+                    str += sprintf(str, "(");
+                }
                 
                 int i = 0;
                 SOL_LIST_ITR_BEGIN(list)
@@ -285,7 +306,7 @@ char* sol_obj_to_string(SolObject obj) {
                     i++;
                 SOL_LIST_ITR_END(list)
                 
-                if (list->freezeCount < 0) str += sprintf(str, "]");
+                if (freeze_count <= 0) str += sprintf(str, "]");
                 else str += sprintf(str, ")");
                 
                 char* ret = malloc(str - buffer + 1);
@@ -297,7 +318,21 @@ char* sol_obj_to_string(SolObject obj) {
             }
         }
         case TYPE_SOL_TOKEN:
-            return strdup(((SolToken) obj)->identifier);
+            if (freeze_count > 0) {
+                SolToken token = (SolToken) obj;
+                int len = strlen(token->identifier);
+                char* ret = malloc(sizeof(char) * (len + freeze_count + 1));
+                for (int i = 0; i < freeze_count; i++) {
+                    ret[i] = ':';
+                }
+                memcpy(ret + freeze_count, token->identifier, len + 1);
+                return ret;
+            } else {
+                return strdup(((SolToken) obj)->identifier);
+            }
+        case TYPE_SOL_OBJ_FROZEN:
+            fprintf(stderr, "fatal error: impossible case reached in sol_obj_to_string\n");
+            exit(EXIT_FAILURE);
     }
 }
 

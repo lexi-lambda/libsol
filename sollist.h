@@ -24,10 +24,15 @@ STRUCT_EXTEND(sol_obj, sol_list,
     int current_index;
     sol_list_node *current;
     int length;
-    int freezeCount;
 );
 typedef sol_list* SolList;
 extern SolList List;
+
+// same as sol_obj_frozen, but typed for lists
+STRUCT_EXTEND(sol_obj, sol_list_frozen,
+    SolList value;
+);
+typedef sol_list_frozen* SolListFrozen;
 
 
 #define SOL_LIST_ITR_BEGIN(list) if ((list)->length > 0) {            \
@@ -45,6 +50,14 @@ extern SolList List;
  * @return new list
  */
 SolList sol_list_create(bool object_mode);
+
+/**
+ * Creates a new, empty list object and returns it frozen.
+ * @param object_mode
+ * @param output for list, or NULL
+ * @return new list
+ */
+SolListFrozen sol_list_create_frozen(bool object_mode);
 
 /**
  * Adds an object to the end of this list.

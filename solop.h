@@ -35,6 +35,7 @@ extern const SolOperatorRef OP_BOUND;
 extern const SolOperatorRef OP_SET;
 extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
+extern const SolOperatorRef OP_FREEZE;
 extern const SolOperatorRef OP_LAMBDA;
 // CONVERSION
 extern const SolOperatorRef OP_TO_TOKEN;
