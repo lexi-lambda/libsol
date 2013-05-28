@@ -23,9 +23,20 @@ typedef struct token_binding {
 } token_binding;
 typedef token_binding* TokenBinding;
 
+typedef enum token_binding_metadata_type {
+    METADATA_GET,
+    METADATA_SET
+} token_binding_metadata_type;
+struct sol_func;
+typedef struct token_binding_metadata {
+    struct sol_func* get;
+    struct sol_func* set;
+} token_binding_metadata;
+
 typedef struct token_pool_entry {
     char* identifier;
     TokenBinding binding;
+    token_binding_metadata metadata;
     UT_hash_handle hh;
 } token_pool_entry;
 typedef token_pool_entry* TokenPoolEntry;

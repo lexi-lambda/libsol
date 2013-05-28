@@ -13,7 +13,7 @@
 
 #define STRUCT_EXTEND(super_name, name, body) struct name ## _raw { body }; typedef struct name { super_name super; body } name
 
-typedef enum {
+typedef enum obj_type {
     TYPE_SOL_OBJ,
     TYPE_SOL_LIST,
     TYPE_SOL_FUNC,
@@ -24,6 +24,7 @@ typedef enum {
 
 struct token_pool_entry;
 struct sol_event_listener;
+enum token_binding_metadata_type;
 
 typedef struct sol_obj {
     obj_type type_id;
@@ -141,6 +142,24 @@ SolObject sol_obj_get_prop(SolObject obj, char* token);
 void sol_obj_set_prop(SolObject obj, char* token, SolObject value);
 
 /**
+ * Gets a metadata value on a property.
+ * @param obj
+ * @param token
+ * @param type
+ * @return value
+ */
+void* sol_obj_get_prop_metadata(SolObject obj, char* token, enum token_binding_metadata_type type);
+
+/**
+ * Sets a metadata value on a property.
+ * @param obj
+ * @param token
+ * @param type
+ * @param value
+ */
+void sol_obj_set_prop_metadata(SolObject obj, char* token, enum token_binding_metadata_type type, void* value);
+
+/**
  * Gets a prototype property for an object.
  * @param obj
  * @param token
@@ -155,6 +174,24 @@ SolObject sol_obj_get_proto(SolObject obj, char* token);
  * @param value
  */
 void sol_obj_set_proto(SolObject obj, char* token, SolObject value);
+
+/**
+ * Gets a metadata value on a property on the prototype.
+ * @param obj
+ * @param token
+ * @param type
+ * @return value
+ */
+void* sol_obj_get_proto_metadata(SolObject obj, char* token, enum token_binding_metadata_type type);
+
+/**
+ * Sets a metadata value on a property on the prototype.
+ * @param obj
+ * @param token
+ * @param type
+ * @param value
+ */
+void sol_obj_set_proto_metadata(SolObject obj, char* token, enum token_binding_metadata_type type, void* value);
 
 #endif	/* SOL_H */
 

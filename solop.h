@@ -60,8 +60,12 @@ extern const SolOperatorRef OP_CAT;
 /* OBJECT FUNCTIONS */
 extern const SolOperatorRef OP_OBJECT_GET;
 extern const SolOperatorRef OP_OBJECT_SET;
+extern const SolOperatorRef OP_OBJECT_GET_METADATA;
+extern const SolOperatorRef OP_OBJECT_SET_METADATA;
 extern const SolOperatorRef OP_PROTOTYPE_GET;
 extern const SolOperatorRef OP_PROTOTYPE_SET;
+extern const SolOperatorRef OP_PROTOTYPE_GET_METADATA;
+extern const SolOperatorRef OP_PROTOTYPE_SET_METADATA;
 extern const SolOperatorRef OP_OBJECT_CLONE;
 // EVENT
 extern const SolOperatorRef OP_OBJECT_LISTEN;

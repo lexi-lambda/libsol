@@ -284,6 +284,30 @@ DEFINEOP(OBJECT_SET) {
     return result;
 }
 
+DEFINEOP(OBJECT_GET_METADATA) {
+    char* identifier = ((SolToken) arguments->first->next->value)->identifier;
+    if (!strcmp(identifier, "get")) {
+        return sol_obj_get_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET);
+    } else if (!strcmp(identifier, "set")) {
+        return sol_obj_get_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
+    } else {
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+    }
+    return nil;
+}
+
+DEFINEOP(OBJECT_SET_METADATA) {
+    char* identifier = ((SolToken) arguments->first->next->value)->identifier;
+    if (!strcmp(identifier, "get")) {
+        sol_obj_set_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET, arguments->first->next->next->value);
+    } else if (!strcmp(identifier, "set")) {
+        sol_obj_set_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
+    } else {
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+    }
+    return nil;
+}
+
 DEFINEOP(PROTOTYPE_GET) {
     return sol_obj_get_proto(self, ((SolToken) arguments->first->value)->identifier);
 }
@@ -292,6 +316,30 @@ DEFINEOP(PROTOTYPE_SET) {
     SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
     sol_obj_set_proto(self, ((SolToken) arguments->first->value)->identifier, result);
     return result;
+}
+
+DEFINEOP(PROTOTYPE_GET_METADATA) {
+    char* identifier = ((SolToken) arguments->first->next->value)->identifier;
+    if (!strcmp(identifier, "get")) {
+        return sol_obj_get_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET);
+    } else if (!strcmp(identifier, "set")) {
+        return sol_obj_get_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
+    } else {
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+    }
+    return nil;
+}
+
+DEFINEOP(PROTOTYPE_SET_METADATA) {
+    char* identifier = ((SolToken) arguments->first->next->value)->identifier;
+    if (!strcmp(identifier, "get")) {
+        sol_obj_set_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET, arguments->first->next->next->value);
+    } else if (!strcmp(identifier, "set")) {
+        sol_obj_set_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
+    } else {
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+    }
+    return nil;
 }
 
 DEFINEOP(OBJECT_CLONE) {

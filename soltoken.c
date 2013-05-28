@@ -88,7 +88,7 @@ SolObject sol_token_register(char* token, SolObject obj) {
     // check if entry already exists
     HASH_FIND_STR(local_token_pool->pool, token, new_token);
     if (new_token == NULL) {
-        new_token = malloc(sizeof(token_pool_entry));
+        new_token = calloc(1, sizeof(*new_token));
         new_token->identifier = strdup(token);
         HASH_ADD_KEYPTR(hh, local_token_pool->pool, new_token->identifier, strlen(new_token->identifier), new_token);
     } else {

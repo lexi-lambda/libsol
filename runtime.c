@@ -119,8 +119,12 @@ static inline void sol_runtime_init_operators() {
     
     REGISTER_METHOD(Object, get, OBJECT_GET);
     REGISTER_METHOD(Object, set, OBJECT_SET);
+    REGISTER_METHOD(Object, get-metadata, OBJECT_GET_METADATA);
+    REGISTER_METHOD(Object, set-metadata, OBJECT_SET_METADATA);
     REGISTER_METHOD(Object, @get, PROTOTYPE_GET);
     REGISTER_METHOD(Object, @set, PROTOTYPE_SET);
+    REGISTER_METHOD(Object, @get-metadata, PROTOTYPE_GET_METADATA);
+    REGISTER_METHOD(Object, @set-metadata, PROTOTYPE_SET_METADATA);
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
