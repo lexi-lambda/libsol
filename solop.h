@@ -67,6 +67,7 @@ extern const SolOperatorRef OP_PROTOTYPE_SET;
 extern const SolOperatorRef OP_PROTOTYPE_GET_METADATA;
 extern const SolOperatorRef OP_PROTOTYPE_SET_METADATA;
 extern const SolOperatorRef OP_OBJECT_CLONE;
+extern const SolOperatorRef OP_OBJECT_TO_STRING;
 // EVENT
 extern const SolOperatorRef OP_OBJECT_LISTEN;
 extern const SolOperatorRef OP_OBJECT_DISPATCH;

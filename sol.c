@@ -200,140 +200,15 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
     }
 }
 
-#define strbuild(buff, offset, buff_size, out, format, ...) \
-  do {                                                      \
-    snprintf(NULL, 0, format "%n", ##__VA_ARGS__, &out);    \
-    while (offset + out >= buff_size) {                     \
-        buff_size *= 2;                                     \
-        buff = realloc(buff, buff_size);                    \
-    }                                                       \
-    sprintf(buff + offset, format, ##__VA_ARGS__);          \
-    offset += out;                                          \
-  } while (0);
-static int sol_obj_indent_level = 0;
 char* sol_obj_to_string(SolObject obj) {
     if (obj == NULL) return strdup("undefined");
-    int freeze_count = 0;
-    while (obj->type_id == TYPE_SOL_OBJ_FROZEN) {
-        freeze_count++;
-        obj = ((SolObjectFrozen) obj)->value;
-    }
-    switch (obj->type_id) {
-        case TYPE_SOL_OBJ: {
-            size_t buff_size = 128;
-            char* buff = malloc(buff_size);
-            off_t buff_offset = 0;
-            int buff_tmp;
-            if (obj->parent == RawObject) {
-                strbuild(buff, buff_offset, buff_size, buff_tmp, "{\n");
-            } else {
-                strbuild(buff, buff_offset, buff_size, buff_tmp, "@{\n");
-            }
-            sol_obj_indent_level++;
-            TokenPoolEntry el, tmp;
-            HASH_ITER(hh, obj->properties, el, tmp) {
-                char* key = el->identifier;
-                char* value = sol_obj_to_string(el->binding->value);
-                for (int i = 0; i < sol_obj_indent_level; i++) {
-                    strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
-                }
-                strbuild(buff, buff_offset, buff_size, buff_tmp, "%s %s\n", key, value);
-                free(value);
-            }
-            sol_obj_indent_level--;
-            for (int i = 0; i < sol_obj_indent_level; i++) {
-                strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
-            }
-            strbuild(buff, buff_offset, buff_size, buff_tmp, "}");
-            return buff;
-        }
-        case TYPE_SOL_FUNC:
-            return strdup("Function");
-        case TYPE_SOL_DATATYPE: {
-            SolDatatype datatype = (SolDatatype) obj;
-            switch (datatype->type_id) {
-                case DATA_TYPE_NUM: {
-                    char* value;
-                    asprintf(&value, "%.8f", ((SolNumber) datatype)->value);
-                    char* value_end = value + strlen(value) - 1;
-                    while (*value_end == '0') {
-                        *value_end = '\0';
-                        value_end--;
-                    }
-                    if (*value_end == '.') {
-                        *value_end = '\0';
-                    }
-                    char* ret = strdup(value);
-                    free(value);
-                    return ret;
-                }
-                case DATA_TYPE_STR: {
-                    char* ret;
-                    asprintf(&ret, "\"%s\"", ((SolString) datatype)->value);
-                    return ret;
-                }
-                case DATA_TYPE_BOOL:
-                    return strdup(((SolBoolean) datatype)->value ? "true" : "false");
-            }
-        }
-        case TYPE_SOL_LIST: {
-            SolList list = (SolList) obj;
-            if (list->length > 0) {
-                int buffer_len = 512;
-                char* buffer = malloc(buffer_len);
-                buffer[0] = '\0';
-                char* str = buffer;
-                
-                if (list->object_mode) str += sprintf(str, "@");
-                if (freeze_count <= 0) str += sprintf(str, "[");
-                else {
-                    for (int i = 1; i < freeze_count; i++) {
-                        str += sprintf(str, ":");
-                    }
-                    str += sprintf(str, "(");
-                }
-                
-                int i = 0;
-                SOL_LIST_ITR_BEGIN(list)
-                    char* obj = sol_obj_to_string(list->current->value);
-                    while (str + strlen(obj) - buffer > buffer_len) {
-                        buffer = realloc(buffer, buffer_len *= 2);
-                        str = buffer + strlen(buffer);
-                    }
-                    str += sprintf(str, "%s", obj);
-                    free(obj);
-                    if (i < list->length - 1) str += sprintf(str, " ");
-                    i++;
-                SOL_LIST_ITR_END(list)
-                
-                if (freeze_count <= 0) str += sprintf(str, "]");
-                else str += sprintf(str, ")");
-                
-                char* ret = malloc(str - buffer + 1);
-                memcpy(ret, buffer, str - buffer + 1);
-                free(buffer);
-                return ret;
-            } else {
-                return strdup("nil");
-            }
-        }
-        case TYPE_SOL_TOKEN:
-            if (freeze_count > 0) {
-                SolToken token = (SolToken) obj;
-                int len = strlen(token->identifier);
-                char* ret = malloc(sizeof(char) * (len + freeze_count + 1));
-                for (int i = 0; i < freeze_count; i++) {
-                    ret[i] = ':';
-                }
-                memcpy(ret + freeze_count, token->identifier, len + 1);
-                return ret;
-            } else {
-                return strdup(((SolToken) obj)->identifier);
-            }
-        case TYPE_SOL_OBJ_FROZEN:
-            fprintf(stderr, "fatal error: impossible case reached in sol_obj_to_string\n");
-            exit(EXIT_FAILURE);
-    }
+    SolFunction to_string = (SolFunction) sol_obj_get_prop(obj, "->string");
+    SolString ret = (SolString) sol_func_execute(to_string, (SolList) nil, obj);
+    if (ret == NULL) return strdup("undefined");
+    char* ret_value = strdup(ret->value);
+    sol_obj_release((SolObject) ret);
+    sol_obj_release((SolObject) to_string);
+    return ret_value;
 }
 
 SolObject sol_obj_get_prop(SolObject obj, char* token) {

@@ -57,7 +57,7 @@ void sol_runtime_init() {
     Event = sol_obj_clone(Object);
     sol_token_register("Event", Event);
     
-    nil = (SolObject) sol_list_create_frozen(false);
+    nil = (SolObject) sol_list_create(false);
     sol_token_register("nil", nil);
     
     // set up prototypes
@@ -126,6 +126,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_METHOD(Object, @get-metadata, PROTOTYPE_GET_METADATA);
     REGISTER_METHOD(Object, @set-metadata, PROTOTYPE_SET_METADATA);
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
+    REGISTER_METHOD(Object, ->string, OBJECT_TO_STRING);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
     

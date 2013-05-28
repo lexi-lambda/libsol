@@ -291,7 +291,7 @@ DEFINEOP(OBJECT_GET_METADATA) {
     } else if (!strcmp(identifier, "set")) {
         return sol_obj_get_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
     }
     return nil;
 }
@@ -303,7 +303,7 @@ DEFINEOP(OBJECT_SET_METADATA) {
     } else if (!strcmp(identifier, "set")) {
         sol_obj_set_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
     }
     return nil;
 }
@@ -325,7 +325,7 @@ DEFINEOP(PROTOTYPE_GET_METADATA) {
     } else if (!strcmp(identifier, "set")) {
         return sol_obj_get_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
     }
     return nil;
 }
@@ -337,13 +337,156 @@ DEFINEOP(PROTOTYPE_SET_METADATA) {
     } else if (!strcmp(identifier, "set")) {
         sol_obj_set_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.", identifier);
+        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
     }
     return nil;
 }
 
 DEFINEOP(OBJECT_CLONE) {
     return sol_obj_clone(self);
+}
+
+#define strbuild(buff, offset, buff_size, out, format, ...) \
+  do {                                                      \
+    snprintf(NULL, 0, format "%n", ##__VA_ARGS__, &out);    \
+    while (offset + out >= buff_size) {                     \
+        buff_size *= 2;                                     \
+        buff = realloc(buff, buff_size);                    \
+    }                                                       \
+    sprintf(buff + offset, format, ##__VA_ARGS__);          \
+    offset += out;                                          \
+  } while (0);
+static int sol_obj_indent_level = 0;
+DEFINEOP(OBJECT_TO_STRING) {
+    int freeze_count = 0;
+    while (self->type_id == TYPE_SOL_OBJ_FROZEN) {
+        freeze_count++;
+        self = ((SolObjectFrozen) self)->value;
+    }
+    switch (self->type_id) {
+        case TYPE_SOL_OBJ: {
+            size_t buff_size = 128;
+            char* buff = malloc(buff_size);
+            off_t buff_offset = 0;
+            int buff_tmp;
+            if (self->parent == RawObject) {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "{\n");
+            } else {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "@{\n");
+            }
+            sol_obj_indent_level++;
+            TokenPoolEntry el, tmp;
+            HASH_ITER(hh, self->properties, el, tmp) {
+                char* key = el->identifier;
+                char* value = sol_obj_to_string(el->binding->value);
+                for (int i = 0; i < sol_obj_indent_level; i++) {
+                    strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
+                }
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "%s %s\n", key, value);
+                free(value);
+            }
+            sol_obj_indent_level--;
+            for (int i = 0; i < sol_obj_indent_level; i++) {
+                strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
+            }
+            strbuild(buff, buff_offset, buff_size, buff_tmp, "}");
+            SolObject ret_obj = sol_obj_retain((SolObject) sol_string_create(buff));
+            free(buff);
+            return ret_obj;
+        }
+        case TYPE_SOL_FUNC:
+            return sol_obj_retain((SolObject) sol_string_create("Function"));
+        case TYPE_SOL_DATATYPE: {
+            SolDatatype datatype = (SolDatatype) self;
+            switch (datatype->type_id) {
+                case DATA_TYPE_NUM: {
+                    char* value;
+                    asprintf(&value, "%.8f", ((SolNumber) datatype)->value);
+                    char* value_end = value + strlen(value) - 1;
+                    while (*value_end == '0') {
+                        *value_end = '\0';
+                        value_end--;
+                    }
+                    if (*value_end == '.') {
+                        *value_end = '\0';
+                    }
+                    SolObject ret_obj = sol_obj_retain((SolObject) sol_string_create(value));
+                    free(value);
+                    return ret_obj;
+                }
+                case DATA_TYPE_STR: {
+                    char* ret;
+                    asprintf(&ret, "\"%s\"", ((SolString) datatype)->value);
+                    SolObject ret_obj = sol_obj_retain((SolObject) sol_string_create(ret));
+                    free(ret);
+                    return ret_obj;
+                }
+                case DATA_TYPE_BOOL:
+                    return sol_obj_retain((SolObject) sol_string_create(((SolBoolean) datatype)->value ? "true" : "false"));
+            }
+        }
+        case TYPE_SOL_LIST: {
+            SolList list = (SolList) self;
+            if (list->length > 0) {
+                int buffer_len = 512;
+                char* buffer = malloc(buffer_len);
+                buffer[0] = '\0';
+                char* str = buffer;
+                
+                if (list->object_mode) str += sprintf(str, "@");
+                if (freeze_count <= 0) str += sprintf(str, "[");
+                else {
+                    for (int i = 1; i < freeze_count; i++) {
+                        str += sprintf(str, ":");
+                    }
+                    str += sprintf(str, "(");
+                }
+                
+                int i = 0;
+                SOL_LIST_ITR_BEGIN(list)
+                char* obj = sol_obj_to_string(list->current->value);
+                while (str + strlen(obj) - buffer > buffer_len) {
+                    buffer = realloc(buffer, buffer_len *= 2);
+                    str = buffer + strlen(buffer);
+                }
+                str += sprintf(str, "%s", obj);
+                free(obj);
+                if (i < list->length - 1) str += sprintf(str, " ");
+                i++;
+                SOL_LIST_ITR_END(list)
+                
+                if (freeze_count <= 0) str += sprintf(str, "]");
+                else str += sprintf(str, ")");
+                
+                char* ret = malloc(str - buffer + 1);
+                memcpy(ret, buffer, str - buffer + 1);
+                free(buffer);
+                SolObject ret_obj = sol_obj_retain((SolObject) sol_string_create(ret));
+                free(ret);
+                return ret_obj;
+            } else {
+                return sol_obj_retain((SolObject) sol_string_create("nil"));
+            }
+        }
+        case TYPE_SOL_TOKEN:
+            if (freeze_count > 0) {
+                SolToken token = (SolToken) self;
+                int len = strlen(token->identifier);
+                char* ret = malloc(sizeof(char) * (len + freeze_count + 1));
+                for (int i = 0; i < freeze_count; i++) {
+                    ret[i] = ':';
+                }
+                memcpy(ret + freeze_count, token->identifier, len + 1);
+                SolObject ret_obj = sol_obj_retain((SolObject) sol_string_create(ret));
+                free(ret);
+                return ret_obj;
+            } else {
+                return sol_obj_retain((SolObject) sol_string_create(((SolToken) self)->identifier));
+            }
+        case TYPE_SOL_OBJ_FROZEN:
+            fprintf(stderr, "fatal error: impossible case reached in sol_obj_to_string\n");
+            exit(EXIT_FAILURE);
+    }
 }
 
 DEFINEOP(OBJECT_LISTEN) {
