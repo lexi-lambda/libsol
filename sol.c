@@ -250,14 +250,29 @@ void sol_obj_set_prop(SolObject obj, char* token, SolObject value) {
         new_token->binding = malloc(sizeof(*new_token->binding));
         HASH_ADD_KEYPTR(hh, obj->properties, new_token->identifier, strlen(new_token->identifier), new_token);
     } else {
-        if (new_token->metadata.set != NULL) {
-            SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-            sol_list_add_obj(arguments, value);
-            sol_obj_release(value);
-            value = sol_func_execute(new_token->metadata.set, arguments, obj);
-            sol_obj_release((SolObject) arguments);
-        }
         sol_obj_release(new_token->binding->value);
+    }
+    if (new_token->metadata.set != NULL) {
+        SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+        sol_list_add_obj(arguments, value);
+        sol_obj_release(value);
+        value = sol_func_execute(new_token->metadata.set, arguments, obj);
+        sol_obj_release((SolObject) arguments);
+    } else {
+        // loop through prototypes to find setters
+        SolObject current_obj = obj;
+        do {
+            TokenPoolEntry resolved_token;
+            HASH_FIND_STR(current_obj->prototype, token, resolved_token);
+            if (resolved_token != NULL && resolved_token->metadata.set != NULL) {
+                SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+                sol_list_add_obj(arguments, value);
+                sol_obj_release(value);
+                value = sol_func_execute(resolved_token->metadata.set, arguments, obj);
+                sol_obj_release((SolObject) arguments);
+                break;
+            }
+        } while ((current_obj = current_obj->parent) != NULL);
     }
     new_token->binding->value = value;
     new_token->binding->retain_count = 1;
@@ -303,15 +318,20 @@ void sol_obj_set_prop_metadata(SolObject obj, char* token, enum token_binding_me
     TokenPoolEntry new_token;
     // check if entry already exists
     HASH_FIND_STR(obj->properties, token, new_token);
-    if (new_token != NULL) {
-        switch (type) {
-            case METADATA_GET:
-                new_token->metadata.get = (SolFunction) sol_obj_retain(value);
-                break;
-            case METADATA_SET:
-                new_token->metadata.set = (SolFunction) sol_obj_retain(value);
-                break;
-        }
+    if (new_token == NULL) {
+        new_token = calloc(1, sizeof(*new_token));
+        new_token->identifier = strdup(token);
+        new_token->binding = malloc(sizeof(*new_token->binding));
+        new_token->binding->retain_count = 1;
+        HASH_ADD_KEYPTR(hh, obj->properties, new_token->identifier, strlen(new_token->identifier), new_token);
+    }
+    switch (type) {
+        case METADATA_GET:
+            new_token->metadata.get = (SolFunction) sol_obj_retain(value);
+            break;
+        case METADATA_SET:
+            new_token->metadata.set = (SolFunction) sol_obj_retain(value);
+            break;
     }
 }
 
@@ -340,14 +360,29 @@ void sol_obj_set_proto(SolObject obj, char* token, SolObject value) {
         new_token->binding = malloc(sizeof(*new_token->binding));
         HASH_ADD_KEYPTR(hh, obj->prototype, new_token->identifier, strlen(new_token->identifier), new_token);
     } else {
-        if (new_token->metadata.set != NULL) {
-            SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-            sol_list_add_obj(arguments, value);
-            sol_obj_release(value);
-            value = sol_func_execute(new_token->metadata.set, arguments, obj);
-            sol_obj_release((SolObject) arguments);
-        }
         sol_obj_release(new_token->binding->value);
+    }
+    if (new_token->metadata.set != NULL) {
+        SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+        sol_list_add_obj(arguments, value);
+        sol_obj_release(value);
+        value = sol_func_execute(new_token->metadata.set, arguments, obj);
+        sol_obj_release((SolObject) arguments);
+    } else {
+        // loop through prototypes to find setters
+        SolObject current_obj = obj;
+        while ((current_obj = current_obj->parent) != NULL) {
+            TokenPoolEntry resolved_token;
+            HASH_FIND_STR(current_obj->prototype, token, resolved_token);
+            if (resolved_token != NULL && resolved_token->metadata.set != NULL) {
+                SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+                sol_list_add_obj(arguments, value);
+                sol_obj_release(value);
+                value = sol_func_execute(resolved_token->metadata.set, arguments, obj);
+                sol_obj_release((SolObject) arguments);
+                break;
+            }
+        }
     }
     new_token->binding->value = value;
     new_token->binding->retain_count = 1;
@@ -375,14 +410,19 @@ void sol_obj_set_proto_metadata(SolObject obj, char* token, enum token_binding_m
     TokenPoolEntry new_token;
     // check if entry already exists
     HASH_FIND_STR(obj->prototype, token, new_token);
-    if (new_token != NULL) {
-        switch (type) {
-            case METADATA_GET:
-                new_token->metadata.get = (SolFunction) sol_obj_retain(value);
-                break;
-            case METADATA_SET:
-                new_token->metadata.set = (SolFunction) sol_obj_retain(value);
-                break;
-        }
+    if (new_token == NULL) {
+        new_token = calloc(1, sizeof(*new_token));
+        new_token->identifier = strdup(token);
+        new_token->binding = malloc(sizeof(*new_token->binding));
+        new_token->binding->retain_count = 1;
+        HASH_ADD_KEYPTR(hh, obj->prototype, new_token->identifier, strlen(new_token->identifier), new_token);
+    }
+    switch (type) {
+        case METADATA_GET:
+            new_token->metadata.get = (SolFunction) sol_obj_retain(value);
+            break;
+        case METADATA_SET:
+            new_token->metadata.set = (SolFunction) sol_obj_retain(value);
+            break;
     }
 }
