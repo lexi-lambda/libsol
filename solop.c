@@ -225,6 +225,19 @@ DEFINEOP(GREATER_THAN_EQUALITY) {
     return sol_obj_retain((SolObject) sol_bool_create(((SolNumber) arguments->first->value)->value >= ((SolNumber) arguments->first->next->value)->value));
 }
 
+DEFINEOP(CONDITIONAL) {
+    SolBoolean condition_object = sol_bool_value_of(arguments->first->value);
+    bool condition = condition_object->value;
+    sol_obj_release((SolObject) condition_object);
+    if (condition) {
+        return sol_obj_retain(arguments->first->next->value);
+    } else if (arguments->first->next->next != NULL) {
+        return sol_obj_retain(arguments->first->next->next->value);
+    } else {
+        return nil;
+    }
+}
+
 DEFINEOP(IF) {
     SolBoolean condition_object = sol_bool_value_of(arguments->first->value);
     bool condition = condition_object->value;
@@ -233,8 +246,9 @@ DEFINEOP(IF) {
         return sol_func_execute((SolFunction) arguments->first->next->value, (SolList) nil, nil);
     } else if (arguments->first->next->next != NULL) {
         return sol_func_execute((SolFunction) arguments->first->next->next->value, (SolList) nil, nil);
+    } else {
+        return nil;
     }
-    return nil;
 }
 
 DEFINEOP(LOOP) {

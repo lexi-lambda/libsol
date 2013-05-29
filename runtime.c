@@ -113,6 +113,7 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(>, GREATER_THAN);
     REGISTER_OP(<=, LESS_THAN_EQUALITY);
     REGISTER_OP(>=, GREATER_THAN_EQUALITY);
+    REGISTER_OP(?, CONDITIONAL);
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
     REGISTER_OP(cat, CAT);

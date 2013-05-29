@@ -52,6 +52,7 @@ extern const SolOperatorRef OP_GREATER_THAN;
 extern const SolOperatorRef OP_LESS_THAN_EQUALITY;
 extern const SolOperatorRef OP_GREATER_THAN_EQUALITY;
 // CONTROL
+extern const SolOperatorRef OP_CONDITIONAL;
 extern const SolOperatorRef OP_IF;
 extern const SolOperatorRef OP_LOOP;
 // STRING
