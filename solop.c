@@ -230,11 +230,9 @@ DEFINEOP(CONDITIONAL) {
     bool condition = condition_object->value;
     sol_obj_release((SolObject) condition_object);
     if (condition) {
-        return sol_obj_retain(arguments->first->next->value);
-    } else if (arguments->first->next->next != NULL) {
-        return sol_obj_retain(arguments->first->next->next->value);
+        return sol_obj_retain(arguments->length > 2 ? arguments->first->next->value : arguments->first->value);
     } else {
-        return nil;
+        return sol_obj_retain(arguments->length > 2 ? arguments->first->next->next->value : arguments->first->next->value);
     }
 }
 
