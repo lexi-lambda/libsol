@@ -36,7 +36,7 @@ SolBoolean sol_bool_value_of(SolObject obj) {
     switch (obj->type_id) {
         case TYPE_SOL_DATATYPE:
             if (((SolDatatype) obj)->type_id == DATA_TYPE_BOOL) {
-                return (SolBoolean) obj;
+                return (SolBoolean) sol_obj_retain(obj);
             } else {
                 return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
             }
