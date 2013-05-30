@@ -114,6 +114,8 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(<=, LESS_THAN_EQUALITY);
     REGISTER_OP(>=, GREATER_THAN_EQUALITY);
     REGISTER_OP(?, CONDITIONAL);
+    sol_obj_set_prop((SolObject) OBJ_CONDITIONAL, "$evaluate-tokens", (SolObject) sol_bool_create(false));
+    sol_obj_set_prop((SolObject) OBJ_CONDITIONAL, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
     REGISTER_OP(cat, CAT);

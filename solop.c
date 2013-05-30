@@ -226,13 +226,24 @@ DEFINEOP(GREATER_THAN_EQUALITY) {
 }
 
 DEFINEOP(CONDITIONAL) {
-    SolBoolean condition_object = sol_bool_value_of(arguments->first->value);
+    SolObject evaluated = sol_obj_evaluate(arguments->first->value);
+    SolBoolean condition_object = sol_bool_value_of(evaluated);
     bool condition = condition_object->value;
     sol_obj_release((SolObject) condition_object);
     if (condition) {
-        return sol_obj_retain(arguments->length > 2 ? arguments->first->next->value : arguments->first->value);
+        if (arguments->length > 2) {
+            sol_obj_release(evaluated);
+            return sol_obj_evaluate(arguments->first->next->value);
+        } else {
+            return evaluated;
+        }
     } else {
-        return sol_obj_retain(arguments->length > 2 ? arguments->first->next->next->value : arguments->first->next->value);
+        sol_obj_release(evaluated);
+        if (arguments->length > 2) {
+            return sol_obj_evaluate(arguments->first->next->next->value);
+        } else {
+            return sol_obj_evaluate(arguments->first->next->value);
+        }
     }
 }
 
