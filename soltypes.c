@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "soltypes.h"
+#include "sollist.h"
 
 SolNumber sol_num_create(double value) {
     return (SolNumber) sol_obj_clone_type((SolObject) Number, &(struct sol_num_raw){
@@ -40,6 +41,8 @@ SolBoolean sol_bool_value_of(SolObject obj) {
             } else {
                 return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
             }
+        case TYPE_SOL_LIST:
+            return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(((SolList) obj)->length > 0));
         default:
             return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
     }
