@@ -110,6 +110,16 @@ void sol_obj_release(SolObject obj) {
     }
 }
 
+void sol_obj_patch(SolObject parent, SolObject patch) {
+    TokenPoolEntry current_token, tmp;
+    HASH_ITER(hh, patch->properties, current_token, tmp) {
+        sol_obj_set_prop(parent, current_token->identifier, current_token->binding->value);
+    }
+    HASH_ITER(hh, patch->prototype, current_token, tmp) {
+        sol_obj_set_proto(parent, current_token->identifier, current_token->binding->value);
+    }
+}
+
 SolObject sol_obj_clone(SolObject obj) {
     SolObject new_obj = malloc(sizeof(*new_obj));
     memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));

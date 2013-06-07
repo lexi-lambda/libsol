@@ -95,6 +95,15 @@ SolObject sol_obj_clone(SolObject obj);
 void* sol_obj_clone_type(SolObject obj, void* default_data, size_t size);
 
 /**
+ * Copies the properties/prototype values from the patch object onto the parent object. The parent object
+ * is modified, but the patch object is left unchanged. Note that while the prototype values are copied,
+ * prototype values from the patch's parents are not copied.
+ * @param parent
+ * @param patch
+ */
+void sol_obj_patch(SolObject parent, SolObject patch);
+
+/**
  * Evaluates an object.
  * @param obj
  * @return object
