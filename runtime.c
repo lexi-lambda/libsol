@@ -135,6 +135,7 @@ static inline void sol_runtime_init_operators() {
     
     sol_obj_set_proto(RawObject, "get", (SolObject) OBJ_OBJECT_GET);
     sol_obj_set_proto(RawObject, "set", (SolObject) OBJ_OBJECT_SET);
+    sol_obj_set_proto(RawObject, "->string", (SolObject) OBJ_OBJECT_TO_STRING);
 }
 
 void sol_runtime_destroy() {
