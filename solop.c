@@ -158,6 +158,58 @@ DEFINEOP(LAMBDA) {
     return (SolObject) func;
 }
 
+DEFINEOP(WRAP) {
+    SolObject ret = sol_obj_clone(RawObject);
+    SOL_LIST_ITR_BEGIN(arguments)
+        SolObject values = arguments->current->value;
+        if (values->type_id == TYPE_SOL_LIST) {
+            SolList keys = (SolList) values;
+            SOL_LIST_ITR_BEGIN(keys)
+                SolToken key = (SolToken) keys->current->value;
+                SolObject value = sol_token_resolve(key->identifier);
+                sol_obj_set_prop(ret, key->identifier, value);
+                sol_obj_release(value);
+            SOL_LIST_ITR_END(keys)
+        } else {
+            TokenPoolEntry current_token, tmp;
+            HASH_ITER(hh, values->properties, current_token, tmp) {
+                SolToken key = (SolToken) current_token->binding->value;
+                SolObject value = sol_token_resolve(key->identifier);
+                sol_obj_set_prop(ret, current_token->identifier, value);
+                sol_obj_release(value);
+            }
+        }
+    SOL_LIST_ITR_END(arguments)
+    return ret;
+}
+
+DEFINEOP(UNWRAP) {
+    SolObject obj = arguments->first->value;
+    SolList keys_list = sol_list_slice_s(arguments, 1);
+    SOL_LIST_ITR_BEGIN(keys_list)
+        SolObject values = keys_list->current->value;
+        if (values->type_id == TYPE_SOL_LIST) {
+            SolList keys = (SolList) values;
+            SOL_LIST_ITR_BEGIN(keys)
+                SolToken key = (SolToken) keys->current->value;
+                SolObject value = sol_obj_get_prop(obj, key->identifier);
+                sol_token_register(key->identifier, value);
+                sol_obj_release(value);
+            SOL_LIST_ITR_END(keys)
+        } else {
+            TokenPoolEntry current_token, tmp;
+            HASH_ITER(hh, values->properties, current_token, tmp) {
+                SolToken key = (SolToken) current_token->binding->value;
+                SolObject value = sol_obj_get_prop(obj, current_token->identifier);
+                sol_token_register(key->identifier, value);
+                sol_obj_release(value);
+            }
+        }
+    SOL_LIST_ITR_END(keys_list)
+    sol_obj_release((SolObject) keys_list);
+    return nil;
+}
+
 DEFINEOP(TO_TOKEN) {
     return sol_obj_retain((SolObject) sol_token_create(((SolString) arguments->first->value)->value));
 }
