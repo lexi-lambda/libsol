@@ -52,6 +52,23 @@ SolObject solar_load(char* filename) {
     // handle export return value
     SolObject exports = sol_obj_clone(RawObject);
     
+    // load dependencies
+    SolObject dependencies = sol_obj_clone(RawObject);
+    yaml_node_t* dependency_list = yaml_node_get_child(&yaml_document, yaml_document_get_root_node(&yaml_document), "require");
+    if (dependency_list) {
+        yaml_node_t* dependency_node;
+        for (int i = 0; (dependency_node = yaml_node_get_element(&yaml_document, dependency_list, i)) != NULL; i++) {
+            char* dependency_name = yaml_node_get_value(dependency_node);
+            if (!strcmp(dependency_name, filename)) {
+                fprintf(stderr, "warning: recursive module dependency in %s\n", filename);
+                continue;
+            }
+            SolObject dependency = solar_load(dependency_name);
+            sol_obj_set_prop(dependencies, dependency_name, dependency);
+            sol_obj_release(dependency);
+        }
+    }
+    
     // load natives
     yaml_node_t* native_list = yaml_node_get_child(&yaml_document, yaml_document_get_root_node(&yaml_document), "natives");
     if (native_list) {
@@ -72,9 +89,9 @@ SolObject solar_load(char* filename) {
             void* native_dl = dlopen(native_path, RTLD_LAZY);
             free(native_path);
             // call init method
-            int (*solar_init)(SolObject) = dlsym(native_dl, "solar_init");
+            int (*solar_init)(SolObject, SolObject) = dlsym(native_dl, "solar_init");
             int init_ret = 0;
-            if (solar_init) init_ret = solar_init(exports);
+            if (solar_init) init_ret = solar_init(exports, dependencies);
             if (init_ret != 0) {
                 fprintf(stderr, "Error loading solar module: '%s' init failed with error code %i.", name, init_ret);
                 exit(EXIT_FAILURE);
