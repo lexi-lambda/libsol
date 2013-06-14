@@ -11,7 +11,7 @@ bool sol_event_has_work(void) {
 }
 
 void sol_event_loop_run(void) {
-    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
+    uv_run(uv_default_loop(), UV_RUN_DEFAULT);
 }
 
 void sol_event_loop_stop(void) {

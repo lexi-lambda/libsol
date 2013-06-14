@@ -148,6 +148,8 @@ SolObject sol_obj_evaluate(SolObject obj) {
             return sol_obj_retain(obj);
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
+            if (list->length == 0)
+                return nil;
             SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
             SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
             obj_type first_type = first_object->type_id;
