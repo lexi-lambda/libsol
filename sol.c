@@ -15,6 +15,16 @@ SolObject sol_obj_create_raw() {
     return sol_obj_clone(RawObject);
 }
 
+SolObjectNative sol_obj_clone_native(SolObject parent, void* value, SolObjectNativeDestructor dealloc) {
+    SolObjectNative native_obj = malloc(sizeof(*native_obj));
+    memcpy(native_obj, &DEFAULT_OBJECT, sizeof(DEFAULT_OBJECT));
+    native_obj->super.parent = sol_obj_retain(parent);
+    native_obj->super.type_id = TYPE_SOL_OBJ_NATIVE;
+    native_obj->value = value;
+    native_obj->dealloc = dealloc;
+    return (SolObjectNative) sol_obj_retain((SolObject) native_obj);
+}
+
 void* sol_obj_create_global(SolObject parent, obj_type type, void* default_data, size_t size, char* token) {
     SolObject new_obj = malloc(size);
     memcpy(new_obj, &DEFAULT_OBJECT, sizeof(*new_obj));
@@ -95,6 +105,11 @@ void sol_obj_release(SolObject obj) {
                 free(token->identifier);
                 break;
             }
+            case TYPE_SOL_OBJ_NATIVE: {
+                SolObjectNative native = (SolObjectNative) obj;
+                native->dealloc(native);
+                break;
+            }
             case TYPE_SOL_OBJ_FROZEN:
                 sol_obj_release(((SolObjectFrozen) obj)->value);
                 break;
@@ -145,6 +160,7 @@ SolObject sol_obj_evaluate(SolObject obj) {
         case TYPE_SOL_OBJ:
         case TYPE_SOL_FUNC:
         case TYPE_SOL_DATATYPE:
+        case TYPE_SOL_OBJ_NATIVE:
             return sol_obj_retain(obj);
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;

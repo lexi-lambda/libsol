@@ -19,7 +19,8 @@ typedef enum obj_type {
     TYPE_SOL_FUNC,
     TYPE_SOL_DATATYPE,
     TYPE_SOL_TOKEN,
-    TYPE_SOL_OBJ_FROZEN
+    TYPE_SOL_OBJ_FROZEN,
+    TYPE_SOL_OBJ_NATIVE
 } obj_type;
 
 struct token_pool_entry;
@@ -40,6 +41,14 @@ extern SolObject Object;
 extern SolObject RawObject;
 extern SolObject nil;
 
+struct sol_obj_native;
+typedef struct sol_obj_native* SolObjectNative;
+typedef void (*SolObjectNativeDestructor)(SolObjectNative obj);
+STRUCT_EXTEND(sol_obj, sol_obj_native,
+    void* value;
+    SolObjectNativeDestructor dealloc;
+);
+
 STRUCT_EXTEND(sol_obj, sol_obj_frozen,
     SolObject value;
 );
@@ -50,6 +59,12 @@ typedef sol_obj_frozen* SolObjectFrozen;
  * @return object
  */
 SolObject sol_obj_create_raw();
+
+/**
+ * Creates and returns a "native" object, or one that provides a facility for
+ * extension with arbitrary data. A deallocation function must be provided.
+ */
+SolObjectNative sol_obj_clone_native(SolObject parent, void* value, SolObjectNativeDestructor dealloc);
 
 /**
  * Creates a new object from the given parent with the given type.

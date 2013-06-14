@@ -105,7 +105,13 @@ SolObject solar_load(char* filename) {
                     yaml_node_t* native_export_value = yaml_document_get_node(&yaml_document, native_export_pair->value);
                     char* export_name = yaml_node_get_value(native_export_key);
                     SolObject export_object = solar_load_object(&yaml_document, native_export_value, native_dl);
-                    sol_obj_set_prop(exports, export_name, export_object);
+                    SolObject existing_export_object = sol_obj_get_prop(exports, export_name);
+                    if (existing_export_object) {
+                        sol_obj_patch(existing_export_object, export_object);
+                        sol_obj_release(existing_export_object);
+                    } else {
+                        sol_obj_set_prop(exports, export_name, export_object);
+                    }
                     sol_obj_release(export_object);
                 }
             }

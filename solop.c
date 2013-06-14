@@ -441,7 +441,8 @@ DEFINEOP(OBJECT_TO_STRING) {
         self = ((SolObjectFrozen) self)->value;
     }
     switch (self->type_id) {
-        case TYPE_SOL_OBJ: {
+        case TYPE_SOL_OBJ:
+        case TYPE_SOL_OBJ_NATIVE: {
             size_t buff_size = 128;
             char* buff = malloc(buff_size);
             off_t buff_offset = 0;
