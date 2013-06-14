@@ -8,7 +8,7 @@ Requirements
 To build libsol, you'll need to have the following installed on your system:
 
 * [libYAML](http://pyyaml.org/wiki/LibYAML) - a C YAML parser
-* [libevent](http://libevent.org/) - a C event library
+* [libuv](https://github.com/joyent/libuv) - a C event library, originally designed for use in Node.js
 
 Building
 --------
