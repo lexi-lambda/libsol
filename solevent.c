@@ -4,32 +4,18 @@
 #include "soltypes.h"
 #include "uthash.h"
 
-static struct event_base* base;
 static unsigned int listener_count = 0;
 
 bool sol_event_has_work(void) {
     return listener_count > 0;
 }
 
-void sol_event_loop_create(void) {
-    base = event_base_new();
-}
-
 void sol_event_loop_run(void) {
-    event_base_dispatch(base);
+    uv_run(uv_default_loop(), UV_RUN_NOWAIT);
 }
 
 void sol_event_loop_stop(void) {
-    event_base_loopexit(base, NULL);
-}
-
-void sol_event_loop_add(struct sol_event* event) {
-    struct event* ev = event_new(base, event->fd, event->flags, event->callback, event->arg);
-    event_add(ev, event->timeout);
-}
-
-void sol_event_loop_add_once(struct sol_event* event) {
-    event_base_once(base, event->fd, event->flags, event->callback, event->arg, event->timeout);
+    uv_stop(uv_default_loop());
 }
 
 void sol_event_listener_add(SolObject object, char* type, SolFunction callback) {

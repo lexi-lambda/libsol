@@ -65,7 +65,6 @@ void sol_runtime_init() {
     sol_obj_set_proto((SolObject) Function, "$evaluate-lists", (SolObject) sol_bool_create(true));
     
     sol_runtime_init_operators();
-    sol_event_loop_create();
     
     // automatically load the solcore library, if it exists
     FILE* f = fopen("/usr/local/lib/sol/solcore.solar/descriptor.yml", "r");
@@ -188,7 +187,7 @@ SolObject sol_runtime_execute(unsigned char* data) {
         sol_obj_release(obj);
     }
     
-    // wait for events to complete
+    // run event loop
     sol_event_loop_run();
     
     return ans;

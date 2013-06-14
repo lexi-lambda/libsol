@@ -575,29 +575,25 @@ struct event_callback_data {
     SolObject object;
     SolEvent event;
 };
-void sol_event_callback(evutil_socket_t fd, short flags, void* arg) {
-    struct event_callback_data* data = arg;
+void sol_event_callback(uv_timer_t* timer_req, int status) {
+    struct event_callback_data* data = timer_req->data;
     SolString type = (SolString) sol_obj_get_prop(data->event, "type");
     sol_event_listener_dispatch(data->object, type->value, data->event);
     sol_obj_release((SolObject) type);
-    if ((flags & EV_PERSIST) == 0) {
-        sol_obj_release(data->object);
-        sol_obj_release(data->event);
-        free(data);
-    }
+    sol_obj_release(data->object);
+    sol_obj_release(data->event);
+    free(data);
+    free(timer_req);
 }
 DEFINEOP(OBJECT_DISPATCH) {
-    struct sol_event event;
-    event.fd = -1;
-    event.flags = EV_TIMEOUT;
-    event.callback = sol_event_callback;
-    event.timeout = NULL;
-    
     struct event_callback_data* data = malloc(sizeof(*data));
     data->object = sol_obj_retain(self);
     data->event = sol_obj_retain(arguments->first->value);
-    event.arg = data;
     
-    sol_event_loop_add_once(&event);
+    uv_timer_t* timer_req = malloc(sizeof(*timer_req));
+    uv_timer_init(uv_default_loop(), timer_req);
+    timer_req->data = data;
+    uv_timer_start(timer_req, sol_event_callback, 0, 0);
+    
     return nil;
 }
