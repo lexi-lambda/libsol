@@ -21,7 +21,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     
     if (func->is_operator) {
         SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-        SOL_LIST_ITR_BEGIN(arguments)
+        SOL_LIST_ITR(arguments) {
             SolObject object = arguments->current->value;
             switch (object->type_id) {
                 case TYPE_SOL_TOKEN:
@@ -48,7 +48,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
                     sol_obj_release(evaluated_object);
                 }
             }
-        SOL_LIST_ITR_END(arguments)
+        }
         SolObject result = ((SolOperator) func)->operator_ref(evaluated, self);
         sol_obj_release((SolObject) evaluated);
         return result;
@@ -71,10 +71,10 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     // execute function statements
     SolObject ans = nil;
     
-    SOL_LIST_ITR_BEGIN(statements)
+    SOL_LIST_ITR(statements) {
         sol_obj_release(ans);
         ans = sol_obj_evaluate(statements->current->value);
-    SOL_LIST_ITR_END(statements)
+    }
     
     // destroy function/closure scope
     sol_token_pool_pop();
@@ -85,7 +85,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
 
 static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments, bool evaluate_tokens, bool evaluate_lists) {
     arguments->current = arguments->first;
-    SOL_LIST_ITR_BEGIN(parameters)
+    SOL_LIST_ITR(parameters) {
         SolToken token = (SolToken) parameters->current->value;
         SolObject object = arguments->current ? arguments->current->value : nil;
         switch (object->type_id) {
@@ -114,5 +114,5 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
             }
         }
         if (arguments->current) arguments->current = arguments->current->next;
-    SOL_LIST_ITR_END(parameters)
+    }
 }

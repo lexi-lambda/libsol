@@ -125,11 +125,11 @@ SolObject sol_list_get_obj(SolList list, int index) {
 
 int sol_list_index_of(SolList list, SolObject obj) {
     int i = 0;
-    SOL_LIST_ITR_BEGIN(list)
+    SOL_LIST_ITR(list) {
         if (sol_obj_equals(list->current->value, obj))
             return i;
         i++;
-    SOL_LIST_ITR_END(list)
+    }
     return -1;
 }
 

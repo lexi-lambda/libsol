@@ -34,15 +34,11 @@ STRUCT_EXTEND(sol_obj, sol_list_frozen,
 );
 typedef sol_list_frozen* SolListFrozen;
 
-
-#define SOL_LIST_ITR_BEGIN(list) if ((list)->length > 0) {            \
-                                 (list)->current = (list)->first;     \
-                                 (list)->current_index = 0;           \
-                                 do {
-
-#define SOL_LIST_ITR_END(list)   (list)->current_index++;             \
-                                 } while (((list)->current = (list)->current->next) != NULL && (list)->current_index < (list)->length); \
-                                 }
+#define SOL_LIST_ITR(list) for (                                       \
+    (list)->current = (list)->first, (list)->current_index = 0;        \
+    (list)->current != NULL && (list)->current_index < (list)->length; \
+    (list)->current = (list)->current->next, (list)->current_index++   \
+)
 
 /**
  * Creates a new, empty list object.
