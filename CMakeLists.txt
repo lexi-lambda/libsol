@@ -31,10 +31,7 @@ set (LIBSOL_PUBLIC_HEADERS
     soltypes.h
     solerror.h
     solevent.h
-    utarray.h
-    uthash.h
-    utlist.h
-    utstring.h)
+    uthash.h)
 set (LIBSOL_PRIVATE_HEADERS
     )
 
