@@ -8,6 +8,7 @@
 #include "soltoken.h"
 #include "solfunc.h"
 #include "solar.h"
+#include "solerror.h"
 #include "solevent.h"
 
 SolOperator sol_operator_create(SolOperatorRef operator_ref) {
@@ -26,6 +27,9 @@ DEFINEOP(ADD) {
     SolNumber result = (SolNumber) sol_obj_retain((SolObject) sol_num_create(0));
     SOL_LIST_ITR(arguments) {
         SolNumber num = (SolNumber) arguments->current->value;
+        SOL_REQUIRE_DATATYPE(num, DATA_TYPE_NUM) {
+            sol_obj_release((SolObject) result);
+        }
         result->value += num->value;
     }
     return (SolObject) result;
@@ -36,6 +40,9 @@ DEFINEOP(SUBTRACT) {
     SolList minusArguments = sol_list_slice_s(arguments, 1);
     SOL_LIST_ITR(minusArguments) {
         SolNumber num = (SolNumber) minusArguments->current->value;
+        SOL_REQUIRE_DATATYPE(num, DATA_TYPE_NUM) {
+            sol_obj_release((SolObject) result);
+        }
         result->value -= num->value;
     }
     sol_obj_release((SolObject) minusArguments);
@@ -46,6 +53,9 @@ DEFINEOP(MULTIPLY) {
     SolNumber result = (SolNumber) sol_obj_retain((SolObject) sol_num_create(1));
     SOL_LIST_ITR(arguments) {
         SolNumber num = (SolNumber) arguments->current->value;
+        SOL_REQUIRE_DATATYPE(num, DATA_TYPE_NUM) {
+            sol_obj_release((SolObject) result);
+        }
         result->value *= num->value;
     }
     return (SolObject) result;
@@ -56,6 +66,9 @@ DEFINEOP(DIVIDE) {
     SolList minusArguments = sol_list_slice_s(arguments, 1);
     SOL_LIST_ITR(minusArguments) {
         SolNumber num = (SolNumber) minusArguments->current->value;
+        SOL_REQUIRE_DATATYPE(num, DATA_TYPE_NUM) {
+            sol_obj_release((SolObject) result);
+        }
         result->value /= num->value;
     }
     sol_obj_release((SolObject) minusArguments);
@@ -67,6 +80,9 @@ DEFINEOP(MOD) {
     SolList minusArguments = sol_list_slice_s(arguments, 1);
     SOL_LIST_ITR(minusArguments) {
         SolNumber num = (SolNumber) minusArguments->current->value;
+        SOL_REQUIRE_DATATYPE(num, DATA_TYPE_NUM) {
+            sol_obj_release((SolObject) result);
+        }
         result->value = fmod(result->value, num->value);
     }
     sol_obj_release((SolObject) minusArguments);
@@ -77,6 +93,7 @@ DEFINEOP(REQUIRE) {
     SolObject ret = nil;
     SOL_LIST_ITR(arguments) {
         sol_obj_release(ret);
+        SOL_REQUIRE_DATATYPE(arguments->current->value, DATA_TYPE_STR);
         SolString string = (SolString) sol_obj_retain(arguments->current->value);
         ret = solar_load(string->value);
         sol_obj_release((SolObject) string);
@@ -85,13 +102,16 @@ DEFINEOP(REQUIRE) {
 }
 
 DEFINEOP(EXIT) {
-    if (arguments->length > 0)
+    if (arguments->length > 0) {
+        SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_NUM);
         exit((int) ((SolNumber) arguments->first->value)->value);
+    }
     exit(0);
 }
 
 DEFINEOP(BIND) {
     SolToken token = (SolToken) arguments->first->value;
+    SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
     SolObject evaluated = arguments->length > 1 ? sol_obj_retain(arguments->first->next->value) : nil;
     SolObject result = sol_obj_retain(sol_token_register(token->identifier, evaluated));
     sol_obj_release(evaluated);
@@ -99,6 +119,7 @@ DEFINEOP(BIND) {
 }
 
 DEFINEOP(BOUND) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
     SolObject resolved = sol_token_resolve(((SolToken) arguments->first->value)->identifier);
     SolObject result = sol_obj_retain((SolObject) sol_bool_create(resolved != NULL));
     sol_obj_release(resolved);
@@ -107,6 +128,7 @@ DEFINEOP(BOUND) {
 
 DEFINEOP(SET) {
     SolToken token = (SolToken) arguments->first->value;
+    SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
     SolObject evaluated = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
     SolObject result = sol_obj_retain(sol_token_update(token->identifier, evaluated));
     sol_obj_release(evaluated);
@@ -115,6 +137,7 @@ DEFINEOP(SET) {
 
 DEFINEOP(DEFINE) {
     SolToken token = (SolToken) arguments->first->value;
+    SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
     if (sol_token_resolve(token->identifier) == NULL)
         sol_token_register(token->identifier, nil);
     SolObject result = sol_obj_retain(arguments->first->next->value);
@@ -152,6 +175,7 @@ DEFINEOP(FREEZE) {
 
 DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) arguments->first->value;
+    SOL_REQUIRE_TYPE(parameters, TYPE_SOL_LIST);
     SolList statements = sol_list_slice_s(arguments, 1);
     SolFunction func = (SolFunction) sol_obj_retain((SolObject) sol_func_create(parameters, statements));
     sol_obj_release((SolObject) statements);
@@ -166,6 +190,9 @@ DEFINEOP(WRAP) {
             SolList keys = (SolList) values;
             SOL_LIST_ITR(keys) {
                 SolToken key = (SolToken) keys->current->value;
+                SOL_REQUIRE_TYPE(key, TYPE_SOL_TOKEN) {
+                    sol_obj_release(ret);
+                }
                 SolObject value = sol_token_resolve(key->identifier);
                 sol_obj_set_prop(ret, key->identifier, value);
                 sol_obj_release(value);
@@ -174,6 +201,9 @@ DEFINEOP(WRAP) {
             TokenPoolEntry current_token, tmp;
             HASH_ITER(hh, values->properties, current_token, tmp) {
                 SolToken key = (SolToken) current_token->binding->value;
+                SOL_REQUIRE_TYPE(key, TYPE_SOL_TOKEN) {
+                    sol_obj_release(ret);
+                }
                 SolObject value = sol_token_resolve(key->identifier);
                 sol_obj_set_prop(ret, current_token->identifier, value);
                 sol_obj_release(value);
@@ -192,6 +222,9 @@ DEFINEOP(UNWRAP) {
             SolList keys = (SolList) values;
             SOL_LIST_ITR(keys) {
                 SolToken key = (SolToken) keys->current->value;
+                SOL_REQUIRE_TYPE(key, TYPE_SOL_TOKEN) {
+                    sol_obj_release((SolObject) keys_list);
+                }
                 SolObject value = sol_obj_get_prop(obj, key->identifier);
                 sol_token_register(key->identifier, value);
                 sol_obj_release(value);
@@ -200,6 +233,9 @@ DEFINEOP(UNWRAP) {
             TokenPoolEntry current_token, tmp;
             HASH_ITER(hh, values->properties, current_token, tmp) {
                 SolToken key = (SolToken) current_token->binding->value;
+                SOL_REQUIRE_TYPE(key, TYPE_SOL_TOKEN) {
+                    sol_obj_release((SolObject) keys_list);
+                }
                 SolObject value = sol_obj_get_prop(obj, current_token->identifier);
                 sol_token_register(key->identifier, value);
                 sol_obj_release(value);
@@ -211,6 +247,7 @@ DEFINEOP(UNWRAP) {
 }
 
 DEFINEOP(TO_TOKEN) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_STR);
     return sol_obj_retain((SolObject) sol_token_create(((SolString) arguments->first->value)->value));
 }
 
@@ -264,18 +301,26 @@ DEFINEOP(EQUALITY) {
 }
 
 DEFINEOP(LESS_THAN) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_NUM);
+    SOL_REQUIRE_DATATYPE(arguments->first->next->value, DATA_TYPE_NUM);
     return sol_obj_retain((SolObject) sol_bool_create(((SolNumber) arguments->first->value)->value < ((SolNumber) arguments->first->next->value)->value));
 }
 
 DEFINEOP(GREATER_THAN) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_NUM);
+    SOL_REQUIRE_DATATYPE(arguments->first->next->value, DATA_TYPE_NUM);
     return sol_obj_retain((SolObject) sol_bool_create(((SolNumber) arguments->first->value)->value > ((SolNumber) arguments->first->next->value)->value));
 }
 
 DEFINEOP(LESS_THAN_EQUALITY) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_NUM);
+    SOL_REQUIRE_DATATYPE(arguments->first->next->value, DATA_TYPE_NUM);
     return sol_obj_retain((SolObject) sol_bool_create(((SolNumber) arguments->first->value)->value <= ((SolNumber) arguments->first->next->value)->value));
 }
 
 DEFINEOP(GREATER_THAN_EQUALITY) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_NUM);
+    SOL_REQUIRE_DATATYPE(arguments->first->next->value, DATA_TYPE_NUM);
     return sol_obj_retain((SolObject) sol_bool_create(((SolNumber) arguments->first->value)->value >= ((SolNumber) arguments->first->next->value)->value));
 }
 
@@ -302,6 +347,9 @@ DEFINEOP(CONDITIONAL) {
 }
 
 DEFINEOP(IF) {
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_FUNC);
+    if (arguments->first->next->next)
+        SOL_REQUIRE_TYPE(arguments->first->next->next->value, TYPE_SOL_FUNC);
     SolBoolean condition_object = sol_bool_value_of(arguments->first->value);
     bool condition = condition_object->value;
     sol_obj_release((SolObject) condition_object);
@@ -316,6 +364,8 @@ DEFINEOP(IF) {
 
 DEFINEOP(LOOP) {
     SolObject result = nil;
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_FUNC);
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_FUNC);
     SolFunction condition_function = (SolFunction) arguments->first->value;
     SolFunction body_function = (SolFunction) arguments->first->next->value;
     for (SolObject condition; sol_bool_value_of(condition = sol_func_execute(condition_function, (SolList) nil, nil))->value; sol_obj_release(condition)) {
@@ -352,23 +402,27 @@ DEFINEOP(CAT) {
 }
 
 DEFINEOP(OBJECT_GET) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
     return sol_obj_get_prop(self, ((SolToken) arguments->first->value)->identifier);
 }
 
 DEFINEOP(OBJECT_SET) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
     SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
     sol_obj_set_prop(self, ((SolToken) arguments->first->value)->identifier, result);
     return result;
 }
 
 DEFINEOP(OBJECT_GET_METADATA) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_TOKEN);
     char* identifier = ((SolToken) arguments->first->next->value)->identifier;
     if (!strcmp(identifier, "get")) {
         return sol_obj_get_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET);
     } else if (!strcmp(identifier, "set")) {
         return sol_obj_get_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
+        throw_msg (Error, "illegal property metadata '%s'", identifier);
     }
     return nil;
 }
@@ -380,41 +434,47 @@ DEFINEOP(OBJECT_SET_METADATA) {
     } else if (!strcmp(identifier, "set")) {
         sol_obj_set_prop_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
+        throw_msg (Error, "illegal property metadata '%s'", identifier);
     }
     return nil;
 }
 
 DEFINEOP(PROTOTYPE_GET) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
     return sol_obj_get_proto(self, ((SolToken) arguments->first->value)->identifier);
 }
 
 DEFINEOP(PROTOTYPE_SET) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
     SolObject result = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
     sol_obj_set_proto(self, ((SolToken) arguments->first->value)->identifier, result);
     return result;
 }
 
 DEFINEOP(PROTOTYPE_GET_METADATA) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_TOKEN);
     char* identifier = ((SolToken) arguments->first->next->value)->identifier;
     if (!strcmp(identifier, "get")) {
         return sol_obj_get_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET);
     } else if (!strcmp(identifier, "set")) {
         return sol_obj_get_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
+        throw_msg (Error, "illegal property metadata '%s'", identifier);
     }
     return nil;
 }
 
 DEFINEOP(PROTOTYPE_SET_METADATA) {
+    SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_TOKEN);
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_TOKEN);
     char* identifier = ((SolToken) arguments->first->next->value)->identifier;
     if (!strcmp(identifier, "get")) {
         sol_obj_set_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_GET, arguments->first->next->next->value);
     } else if (!strcmp(identifier, "set")) {
         sol_obj_set_proto_metadata(self, ((SolToken) arguments->first->value)->identifier, METADATA_SET, arguments->first->next->next->value);
     } else {
-        fprintf(stderr, "ERROR: Illegal property metadata '%s'.\n", identifier);
+        throw_msg (Error, "illegal property metadata '%s'", identifier);
     }
     return nil;
 }
@@ -568,6 +628,8 @@ DEFINEOP(OBJECT_TO_STRING) {
 }
 
 DEFINEOP(OBJECT_LISTEN) {
+    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_STR);
+    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_FUNC);
     sol_event_listener_add(self, ((SolString) arguments->first->value)->value, (SolFunction) arguments->first->next->value);
     return nil;
 }

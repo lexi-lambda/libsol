@@ -50,5 +50,12 @@ SolString sol_string_create(char* value);
 SolBoolean sol_bool_create(bool value);
 SolBoolean sol_bool_value_of(SolObject obj);
 
+/**
+ * Creates a string literal that represents a datatype.
+ * @param type
+ * @return
+ */
+char* sol_datatype_string(data_type type);
+
 #endif	/* SOLTYPES_H */
 

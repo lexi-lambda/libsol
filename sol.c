@@ -8,6 +8,7 @@
 #include "solfunc.h"
 #include "solop.h"
 #include "soltypes.h"
+#include "solerror.h"
 
 const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 0, NULL, NULL, NULL, NULL };
 
@@ -168,6 +169,8 @@ SolObject sol_obj_evaluate(SolObject obj) {
                 return nil;
             SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
             SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
+            if (first_object == NULL)
+                throw_msg (TypeError, "attempted to call undefined");
             obj_type first_type = first_object->type_id;
             switch (first_type) {
                 case TYPE_SOL_FUNC: {
@@ -180,10 +183,9 @@ SolObject sol_obj_evaluate(SolObject obj) {
                     return result;
                 }
                 default:
-                    fprintf(stderr, "ERROR: Attempted to execute non-executable object.\n");
                     sol_obj_release(self);
                     sol_obj_release(first_object);
-                    return nil;
+                    throw_msg (TypeError, "attempted to call non-function");
             }
         }
         case TYPE_SOL_TOKEN: {
@@ -193,8 +195,7 @@ SolObject sol_obj_evaluate(SolObject obj) {
         case TYPE_SOL_OBJ_FROZEN:
             return sol_obj_retain(((SolObjectFrozen) obj)->value);
         default:
-            fprintf(stderr, "WARNING: Encountered unknown obj_type.\n");
-            return sol_obj_retain(obj);
+            throw_msg (BytecodeError, "encountered unknown obj_type");
     }
 }
 
@@ -237,6 +238,33 @@ char* sol_obj_to_string(SolObject obj) {
     sol_obj_release((SolObject) ret);
     sol_obj_release((SolObject) to_string);
     return ret_value;
+}
+
+char* sol_type_string(obj_type type) {
+    switch (type) {
+        case TYPE_SOL_OBJ:
+            return "Object";
+        case TYPE_SOL_LIST:
+            return "List";
+        case TYPE_SOL_FUNC:
+            return "Function";
+        case TYPE_SOL_DATATYPE:
+            return "Datatype";
+        case TYPE_SOL_TOKEN:
+            return "Token";
+        case TYPE_SOL_OBJ_FROZEN:
+            return "FrozenObject";
+        case TYPE_SOL_OBJ_NATIVE:
+            return "NativeObject";
+    }
+}
+
+char* sol_obj_type_string(SolObject obj) {
+    if (obj == NULL)
+        return "undefined";
+    if (obj->type_id == TYPE_SOL_DATATYPE)
+        return sol_datatype_string(((SolDatatype) obj)->type_id);
+    return sol_type_string(obj->type_id);
 }
 
 SolObject sol_obj_get_prop(SolObject obj, char* token) {

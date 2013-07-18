@@ -18,6 +18,7 @@ set (LIBSOL_SOURCES
     solop.c
     soltoken.c
     soltypes.c
+    solerror.c
     solevent.c)
 set (LIBSOL_PUBLIC_HEADERS
     runtime.h
@@ -28,6 +29,7 @@ set (LIBSOL_PUBLIC_HEADERS
     solop.h
     soltoken.h
     soltypes.h
+    solerror.h
     solevent.h
     utarray.h
     uthash.h

@@ -6,13 +6,7 @@
 #include <math.h>
 #include <float.h>
 #include <arpa/inet.h>
-#include "sol.h"
-#include "soltoken.h"
-#include "soltypes.h"
-#include "sollist.h"
-#include "solfunc.h"
-#include "solop.h"
-#include "solevent.h"
+#include "runtime.h"
 
 SolObject Object;
 SolObject RawObject;
@@ -169,26 +163,33 @@ static unsigned char* data_start;
 static SolObject sol_runtime_execute_get_object(unsigned char** data);
 static uint64_t sol_runtime_execute_decode_length(unsigned char** data);
 SolObject sol_runtime_execute(unsigned char* data) {
-    data_start = data;
-    // ensure magic number is correct
-    if (data[0] != 'S' || data[1] != 'O' || data[2] != 'L' || data[3] != 'B' || data[4] != 'I' || data[5] != 'N') {
-        fprintf(stderr, "Error executing sol bytecode: invalid magic number.\n");
-        exit(EXIT_FAILURE);
-    }
+    SolObject ans = nil;
     
-    // advance data pointer
-    data += 6;
-    
-    // execute top-level objects
-    SolObject obj, ans = nil;
-    while ((obj = sol_runtime_execute_get_object(&data)) != NULL) {
-        sol_obj_release(ans);
-        ans = sol_obj_evaluate(obj);
-        sol_obj_release(obj);
-    }
-    
-    // run event loop
-    sol_event_loop_run();
+    try {
+        data_start = data;
+        // ensure magic number is correct
+        if (data[0] != 'S' || data[1] != 'O' || data[2] != 'L' || data[3] != 'B' || data[4] != 'I' || data[5] != 'N') {
+            fprintf(stderr, "Error executing sol bytecode: invalid magic number.\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        // advance data pointer
+        data += 6;
+        
+        // execute top-level objects
+        SolObject obj;
+        while ((obj = sol_runtime_execute_get_object(&data)) != NULL) {
+            sol_obj_release(ans);
+            ans = sol_obj_evaluate(obj);
+            sol_obj_release(obj);
+        }
+        
+        // run event loop
+        sol_event_loop_run();
+    } catch (Error, err) {
+        fprintf(stderr, "%s: %s\n", err->type->name, err->message);
+        ans = nil;
+    } finally {}
     
     return ans;
 }

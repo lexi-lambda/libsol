@@ -149,6 +149,21 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b);
 char* sol_obj_to_string(SolObject obj);
 
 /**
+ * Creates a string literal that represents a type.
+ * Use sol_datatype_string for datatypes instead.
+ * @param type
+ * @return 
+ */
+char* sol_type_string(obj_type type);
+
+/**
+ * Creates a string literal that represents an object's raw type.
+ * @param obj
+ * @return 
+ */
+char* sol_obj_type_string(SolObject obj);
+
+/**
  * Gets a property on an object. This function searches ivars and all
  * associated prototypes.
  * @param obj

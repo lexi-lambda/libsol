@@ -47,3 +47,14 @@ SolBoolean sol_bool_value_of(SolObject obj) {
             return (SolBoolean) sol_obj_retain((SolObject) sol_bool_create(true));
     }
 }
+
+char* sol_datatype_string(data_type type) {
+    switch (type) {
+        case DATA_TYPE_NUM:
+            return "Number";
+        case DATA_TYPE_STR:
+            return "String";
+        case DATA_TYPE_BOOL:
+            return "Boolean";
+    }
+}

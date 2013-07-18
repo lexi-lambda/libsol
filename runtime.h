@@ -14,6 +14,8 @@
 #include "solop.h"
 #include "soltoken.h"
 #include "soltypes.h"
+#include "solerror.h"
+#include "solevent.h"
 #include "solar.h"
 
 void sol_runtime_init();
