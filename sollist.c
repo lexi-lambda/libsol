@@ -139,12 +139,13 @@ SolList sol_list_slice(SolList list, int start, int end) {
     
     // walk to starting position
     sol_list_node* node = list->first;
-    for (int i = 0; i < start; i++) {
+    int i = 0;
+    for (; i < start; i++) {
         node = node->next;
     }
     
     // copy nodes
-    for (int i = 0; i < end; i++) {
+    for (; i < end; i++) {
         sol_list_add_obj(new_list, node->value);
         node = node->next;
     }
