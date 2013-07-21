@@ -253,10 +253,15 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             ++*data;
             SolList parameters = (SolList) sol_runtime_execute_get_object(data);
             SolList statements = (SolList) sol_runtime_execute_get_object(data);
-            SolFunction function = sol_func_create(parameters, statements);
+            SolList function = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+            sol_list_add_obj(function, (SolObject) sol_token_create("^"));
+            sol_list_add_obj(function, (SolObject) parameters);
+            SOL_LIST_ITR(statements) {
+                sol_list_add_obj(function, statements->current->value);
+            }
             sol_obj_release((SolObject) parameters);
             sol_obj_release((SolObject) statements);
-            return sol_obj_retain((SolObject) function);
+            return (SolObject) function;
         }
         case 0x4: {
             ++*data;
