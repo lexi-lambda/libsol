@@ -168,9 +168,11 @@ SolObject sol_obj_evaluate(SolObject obj) {
             if (list->length == 0)
                 return nil;
             SolObject self = list->object_mode ? sol_obj_evaluate(list->first->value) : nil;
+            if (self == NULL)
+                throw_msg (TypeError, "attempted to call a method on undefined");
             SolObject first_object = list->object_mode ? sol_obj_get_prop(self, ((SolToken) list->first->next->value)->identifier) : sol_obj_evaluate(list->first->value);
             if (first_object == NULL)
-                throw_msg (TypeError, "attempted to call undefined");
+                throw_msg (TypeError, "attempted to call an undefined %s", list->object_mode ? "method" : "function");
             obj_type first_type = first_object->type_id;
             switch (first_type) {
                 case TYPE_SOL_FUNC: {
