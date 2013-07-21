@@ -240,6 +240,17 @@ char* sol_obj_to_string(SolObject obj) {
     return ret_value;
 }
 
+char* sol_obj_inspect(SolObject obj) {
+    if (obj == NULL) return strdup("undefined");
+    SolFunction inspect = (SolFunction) sol_obj_get_prop(obj, "inspect");
+    SolString ret = (SolString) sol_func_execute(inspect, (SolList) nil, obj);
+    if (ret == NULL) return strdup("undefined");
+    char* ret_value = strdup(ret->value);
+    sol_obj_release((SolObject) ret);
+    sol_obj_release((SolObject) inspect);
+    return ret_value;
+}
+
 char* sol_type_string(obj_type type) {
     switch (type) {
         case TYPE_SOL_OBJ:

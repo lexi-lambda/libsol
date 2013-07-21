@@ -483,6 +483,13 @@ DEFINEOP(OBJECT_CLONE) {
     return sol_obj_clone(self);
 }
 
+DEFINEOP(OBJECT_TO_STRING) {
+    char* value = sol_obj_inspect(self);
+    SolObject ret = sol_obj_retain((SolObject) sol_string_create(value));
+    free(value);
+    return ret;
+}
+
 #define strbuild(buff, offset, buff_size, out, format, ...) \
   do {                                                      \
     snprintf(NULL, 0, format "%n", ##__VA_ARGS__, &out);    \
@@ -494,7 +501,7 @@ DEFINEOP(OBJECT_CLONE) {
     offset += out;                                          \
   } while (0);
 static int sol_obj_indent_level = 0;
-DEFINEOP(OBJECT_TO_STRING) {
+DEFINEOP(OBJECT_INSPECT) {
     int freeze_count = 0;
     while (self->type_id == TYPE_SOL_OBJ_FROZEN) {
         freeze_count++;
@@ -516,7 +523,7 @@ DEFINEOP(OBJECT_TO_STRING) {
             TokenPoolEntry el, tmp;
             HASH_ITER(hh, self->properties, el, tmp) {
                 char* key = el->identifier;
-                char* value = sol_obj_to_string(el->binding->value);
+                char* value = sol_obj_inspect(el->binding->value);
                 for (int i = 0; i < sol_obj_indent_level; i++) {
                     strbuild(buff, buff_offset, buff_size, buff_tmp, "  ");
                 }
@@ -582,7 +589,7 @@ DEFINEOP(OBJECT_TO_STRING) {
                 
                 int i = 0;
                 SOL_LIST_ITR(list) {
-                char* obj = sol_obj_to_string(list->current->value);
+                char* obj = sol_obj_inspect(list->current->value);
                 while (str + strlen(obj) - buffer > buffer_len) {
                     buffer = realloc(buffer, buffer_len *= 2);
                     str = buffer + strlen(buffer);
@@ -622,7 +629,7 @@ DEFINEOP(OBJECT_TO_STRING) {
                 return sol_obj_retain((SolObject) sol_string_create(((SolToken) self)->identifier));
             }
         case TYPE_SOL_OBJ_FROZEN:
-            fprintf(stderr, "fatal error: impossible case reached in sol_obj_to_string\n");
+            fprintf(stderr, "fatal error: impossible case reached in sol_obj_inspect\n");
             exit(EXIT_FAILURE);
     }
 }

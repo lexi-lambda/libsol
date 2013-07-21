@@ -144,9 +144,16 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b);
 /**
  * Provides a human-readable representation of an object.
  * @param obj
- * @return 
+ * @return
  */
 char* sol_obj_to_string(SolObject obj);
+
+/**
+ * Provides a human-readable internal representation of an object.
+ * @param obj
+ * @return 
+ */
+char* sol_obj_inspect(SolObject obj);
 
 /**
  * Creates a string literal that represents a type.

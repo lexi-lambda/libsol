@@ -125,12 +125,13 @@ static inline void sol_runtime_init_operators() {
     REGISTER_METHOD(Object, @set-metadata, PROTOTYPE_SET_METADATA);
     REGISTER_METHOD(Object, clone, OBJECT_CLONE);
     REGISTER_METHOD(Object, ->string, OBJECT_TO_STRING);
+    REGISTER_METHOD(Object, inspect, OBJECT_INSPECT);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
     
     sol_obj_set_proto(RawObject, "get", (SolObject) OBJ_OBJECT_GET);
     sol_obj_set_proto(RawObject, "set", (SolObject) OBJ_OBJECT_SET);
-    sol_obj_set_proto(RawObject, "->string", (SolObject) OBJ_OBJECT_TO_STRING);
+    sol_obj_set_proto(RawObject, "inspect", (SolObject) OBJ_OBJECT_INSPECT);
 }
 
 void sol_runtime_destroy() {
