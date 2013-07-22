@@ -252,11 +252,10 @@ DEFINEOP(TO_TOKEN) {
 }
 
 DEFINEOP(PRINT) {
-    SolObject argument = sol_obj_retain(arguments->first->value);
-    char* string = (argument && argument->type_id == TYPE_SOL_DATATYPE && ((SolDatatype) argument)->type_id == DATA_TYPE_STR) ? strdup(((SolString) argument)->value) : sol_obj_to_string(argument);
+    SolString value = (SolString) OP_CAT(arguments, nil);
+    char* string = value->value;
     printf("%s\n", string);
-    free(string);
-    return argument;
+    return (SolObject) value;
 }
 
 DEFINEOP(NOT) {
