@@ -211,19 +211,20 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             } else {
                 object = sol_obj_create_raw();
             }
-            uint64_t object_length = sol_runtime_execute_decode_length(data);
-            for (int i = 0; i < object_length; i++) {
-                uint64_t key_length = sol_runtime_execute_decode_length(data);
-                char* key = memcpy(malloc(sizeof(*key) * key_length + 1), *data, sizeof(*key) * key_length);
-                key[key_length] = '\0';
-                *data += sizeof(*key) * key_length;
-                SolObject value = sol_runtime_execute_get_object(data);
-                SolObject evaluated = sol_obj_evaluate(value);
-                sol_obj_set_prop(object, key, evaluated);
-                free(key);
-                sol_obj_release(evaluated);
+            SolList keys = (SolList) sol_runtime_execute_get_object(data);
+            SolList values = (SolList) sol_runtime_execute_get_object(data);
+            values->current = values->first;
+            SOL_LIST_ITR(keys) {
+                SolObject token = sol_obj_evaluate(keys->current->value);
+                SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
+                SolObject value = sol_obj_evaluate(values->current->value);
+                sol_obj_set_prop(object, ((SolToken) token)->identifier, value);
+                sol_obj_release(token);
                 sol_obj_release(value);
+                values->current = values->current->next;
             }
+            sol_obj_release((SolObject) keys);
+            sol_obj_release((SolObject) values);
             return object;
         }
         case 0x2: {
@@ -255,7 +256,14 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             SolList statements = (SolList) sol_runtime_execute_get_object(data);
             SolList function = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
             sol_list_add_obj(function, (SolObject) sol_token_create("^"));
-            sol_list_add_obj(function, (SolObject) parameters);
+            SolList evaluated_parameters = sol_list_create(false);
+            sol_list_add_obj(function, (SolObject) evaluated_parameters);
+            SOL_LIST_ITR(parameters) {
+                SolObject evaluated = sol_obj_evaluate(parameters->current->value);
+                SOL_REQUIRE_TYPE(evaluated, TYPE_SOL_TOKEN);
+                sol_list_add_obj(evaluated_parameters, evaluated);
+                sol_obj_release(evaluated);
+            }
             SOL_LIST_ITR(statements) {
                 sol_list_add_obj(function, statements->current->value);
             }
