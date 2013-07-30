@@ -154,7 +154,7 @@ DEFINEOP(FREEZE) {
     switch (obj->type_id) {
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
-            if (list->first->value->type_id == TYPE_SOL_TOKEN) {
+            if (list->first && list->first->value->type_id == TYPE_SOL_TOKEN) {
                 SolObject first = sol_obj_evaluate(list->first->value);
                 if (first->type_id == TYPE_SOL_FUNC && ((SolFunction) first)->is_operator && ((SolOperator) first)->operator_ref == OP_FREEZE) {
                     SolObject frozen = sol_obj_evaluate(obj);
@@ -163,7 +163,13 @@ DEFINEOP(FREEZE) {
                     return (SolObject) ret;
                 }
             }
-            return sol_obj_retain(obj);
+            SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
+            SOL_LIST_ITR(list) {
+                SolObject object = sol_obj_evaluate(list->current->value);
+                sol_list_add_obj(evaluated, object);
+                sol_obj_release(object);
+            }
+            return (SolObject) evaluated;
         }
         case TYPE_SOL_TOKEN:
             return sol_obj_retain(obj);
@@ -174,7 +180,7 @@ DEFINEOP(FREEZE) {
 }
 
 DEFINEOP(LAMBDA) {
-    SolList parameters = (SolList) arguments->first->value;
+    SolList parameters = (SolList) sol_obj_evaluate((SolObject) arguments->first->value);
     SOL_REQUIRE_TYPE(parameters, TYPE_SOL_LIST);
     SolList statements = sol_list_slice_s(arguments, 1);
     SolFunction func = (SolFunction) sol_obj_retain((SolObject) sol_func_create(parameters, statements));
@@ -478,8 +484,23 @@ DEFINEOP(PROTOTYPE_SET_METADATA) {
     return nil;
 }
 
+DEFINEOP(OBJECT_CREATE) {
+    SolObject ret = (SolObject) sol_obj_create_raw();
+    SOL_LIST_ITR(arguments) {
+        SolToken token = (SolToken) arguments->current->value;
+        SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
+        SolObject value = arguments->current->next->value;
+        sol_obj_set_prop(ret, token->identifier, value);
+        arguments->current = arguments->current->next;
+    }
+    return ret;
+}
+
 DEFINEOP(OBJECT_CLONE) {
-    return sol_obj_clone(self);
+    SolObject ret = sol_obj_clone(self);
+    if (arguments->first)
+        sol_obj_patch(ret, arguments->first->value);
+    return ret;
 }
 
 DEFINEOP(OBJECT_TO_STRING) {

@@ -27,6 +27,10 @@ void sol_runtime_init() {
     
     // seed rand
     srand((unsigned int) time(NULL));
+    // throw away a few values
+    for (int i = 0; i < 10; i++) {
+        rand();
+    }
     
     // initialize object types
     Object = malloc(sizeof(*Object));
@@ -73,6 +77,7 @@ void sol_runtime_init() {
 
 #define REGISTER_OP(token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_token_register(#token, (SolObject) OBJ_ ## name)
 #define REGISTER_METHOD(object, token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_obj_set_proto(object, #token, (SolObject) OBJ_ ## name);
+#define REGISTER_PROPERTY(object, token, name) SolOperator OBJ_ ## name = sol_operator_create(OP_ ## name); sol_obj_set_prop(object, #token, (SolObject) OBJ_ ## name);
 static inline void sol_runtime_init_operators() {
     REGISTER_OP(+, ADD);
     REGISTER_OP(-, SUBTRACT);
@@ -128,6 +133,8 @@ static inline void sol_runtime_init_operators() {
     REGISTER_METHOD(Object, inspect, OBJECT_INSPECT);
     REGISTER_METHOD(Object, listen, OBJECT_LISTEN);
     REGISTER_METHOD(Object, dispatch, OBJECT_DISPATCH);
+    
+    REGISTER_PROPERTY(Object, create, OBJECT_CREATE);
     
     sol_obj_set_proto(RawObject, "get", (SolObject) OBJ_OBJECT_GET);
     sol_obj_set_proto(RawObject, "set", (SolObject) OBJ_OBJECT_SET);
@@ -198,80 +205,17 @@ SolObject sol_runtime_execute(unsigned char* data) {
 static SolObject sol_runtime_execute_get_object(unsigned char** data) {
     switch (**data) {
         case 0x1: {
-            ++*data;
-            uint64_t type_length = sol_runtime_execute_decode_length(data);
-            SolObject object;
-            if (type_length > 0) {
-                char* type_name = memcpy(malloc(sizeof(*type_name) * type_length + 1), *data, sizeof(*type_name) * type_length);
-                type_name[type_length] = '\0';
-                *data += sizeof(*type_name) * type_length;
-                SolObject parent = sol_token_resolve(type_name);
-                free(type_name);
-                object = sol_obj_clone(parent);
-            } else {
-                object = sol_obj_create_raw();
-            }
-            SolList keys = (SolList) sol_runtime_execute_get_object(data);
-            SolList values = (SolList) sol_runtime_execute_get_object(data);
-            values->current = values->first;
-            SOL_LIST_ITR(keys) {
-                SolObject token = sol_obj_evaluate(keys->current->value);
-                SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
-                SolObject value = sol_obj_evaluate(values->current->value);
-                sol_obj_set_prop(object, ((SolToken) token)->identifier, value);
-                sol_obj_release(token);
-                sol_obj_release(value);
-                values->current = values->current->next;
-            }
-            sol_obj_release((SolObject) keys);
-            sol_obj_release((SolObject) values);
-            return object;
-        }
-        case 0x2: {
             SolList list = (SolList) sol_obj_retain((SolObject) sol_list_create((bool) *++*data));
-            bool literal = (bool) *++*data;
             ++*data;
             uint64_t length = sol_runtime_execute_decode_length(data);
             for (; length > 0; length--) {
                 SolObject value = sol_runtime_execute_get_object(data);
-                if (literal) {
-                    SolObject evaluated = sol_obj_evaluate(value);
-                    sol_list_add_obj(list, evaluated);
-                    sol_obj_release(evaluated);
-                } else {
-                    sol_list_add_obj(list, value);
-                }
+                sol_list_add_obj(list, value);
                 sol_obj_release(value);
-            }
-            if (literal) {
-                SolObjectFrozen frozen = (SolObjectFrozen) sol_obj_retain((SolObject) sol_obj_freeze((SolObject) list));
-                sol_obj_release((SolObject) list);
-                return (SolObject) frozen;
             }
             return (SolObject) list;
         }
-        case 0x3: {
-            ++*data;
-            SolList parameters = (SolList) sol_runtime_execute_get_object(data);
-            SolList statements = (SolList) sol_runtime_execute_get_object(data);
-            SolList function = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-            sol_list_add_obj(function, (SolObject) sol_token_create("^"));
-            SolList evaluated_parameters = sol_list_create(false);
-            sol_list_add_obj(function, (SolObject) evaluated_parameters);
-            SOL_LIST_ITR(parameters) {
-                SolObject evaluated = sol_obj_evaluate(parameters->current->value);
-                SOL_REQUIRE_TYPE(evaluated, TYPE_SOL_TOKEN);
-                sol_list_add_obj(evaluated_parameters, evaluated);
-                sol_obj_release(evaluated);
-            }
-            SOL_LIST_ITR(statements) {
-                sol_list_add_obj(function, statements->current->value);
-            }
-            sol_obj_release((SolObject) parameters);
-            sol_obj_release((SolObject) statements);
-            return (SolObject) function;
-        }
-        case 0x4: {
+        case 0x2: {
             ++*data;
             uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
@@ -281,21 +225,24 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             free(value);
             return (SolObject) token;
         }
-        case 0x5: {
+        case 0x3: {
             ++*data;
-            char sign = **data;
-            ++*data;
-            uint64_t base_data;
-            memcpy(&base_data, *data, sizeof(uint64_t));
-            base_data = ntohll(base_data);
-            *data += sizeof(uint64_t);
-            uint64_t exp_data = sol_runtime_execute_decode_length(data);
-            int exp = (sign & 0x1) ? exp_data : exp_data * -1;
-            double base = (double) base_data / pow(FLT_RADIX, DBL_MANT_DIG);
-            double value = ldexp(base, exp);
-            return sol_obj_retain((SolObject) sol_num_create((sign & 0x2) ? value : value * -1));
+            
+            int64_t significand;
+            memcpy(&significand, *data, sizeof(significand));
+            significand = ntohll(significand);
+            *data += sizeof(significand);
+            
+            int32_t exponent;
+            memcpy(&exponent, *data, sizeof(exponent));
+            exponent = ntohl(exponent);
+            *data += sizeof(exponent);
+            
+            double fraction = significand / pow(2, 52);
+            double value = ldexp(fraction, exponent);
+            return sol_obj_retain((SolObject) sol_num_create(value));
         }
-        case 0x6: {
+        case 0x4: {
             ++*data;
             uint64_t length = sol_runtime_execute_decode_length(data);
             char* value = memcpy(malloc(sizeof(*value) * length + 1), *data, sizeof(*value) * length + 1);
@@ -305,15 +252,10 @@ static SolObject sol_runtime_execute_get_object(unsigned char** data) {
             free(value);
             return (SolObject) string;
         }
-        case 0x7: {
+        case 0x5: {
             bool value = *++*data;
             ++*data;
             return sol_obj_retain((SolObject) sol_bool_create(value));
-        }
-        case 0x8: {
-            ++*data;
-            SolObject value = sol_runtime_execute_get_object(data);
-            return sol_obj_retain((SolObject) sol_obj_freeze(value));
         }
         case 0x0:
             return NULL;
