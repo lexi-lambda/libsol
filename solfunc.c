@@ -61,6 +61,8 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     // create function scope
     sol_token_pool_push();
     
+    // create 'this' reference
+    sol_token_register("this", (SolObject) func);
     // create 'self' reference
     sol_token_register("self", self);
     
