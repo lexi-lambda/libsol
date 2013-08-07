@@ -209,9 +209,9 @@ SolObjectFrozen sol_obj_freeze(SolObject obj) {
     return frozen;
 }
 
-int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
+bool sol_obj_equals(SolObject obj_a, SolObject obj_b) {
     if (obj_a->type_id != obj_b->type_id) {
-        return 0;
+        return false;
     }
     switch (obj_a->type_id) {
         case TYPE_SOL_DATATYPE:
@@ -226,6 +226,8 @@ int sol_obj_equals(SolObject obj_a, SolObject obj_b) {
             }
         case TYPE_SOL_TOKEN:
             return !strcmp(((SolToken) obj_a)->identifier, ((SolToken) obj_b)->identifier);
+        case TYPE_SOL_OBJ_FROZEN:
+            return sol_obj_equals(((SolObjectFrozen) obj_a)->value, ((SolObjectFrozen) obj_b)->value);
         default:
             return obj_a == obj_b;
     }

@@ -139,7 +139,7 @@ SolObjectFrozen sol_obj_freeze(SolObject obj);
  * @param obj_b
  * @return 
  */
-int sol_obj_equals(SolObject obj_a, SolObject obj_b);
+bool sol_obj_equals(SolObject obj_a, SolObject obj_b);
 
 /**
  * Provides a human-readable representation of an object.
