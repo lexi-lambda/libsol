@@ -503,6 +503,29 @@ DEFINEOP(OBJECT_CLONE) {
     return ret;
 }
 
+DEFINEOP(OBJECT_PATCH) {
+    SolObject patch = arguments->first->value;
+    
+    bool proto = false;
+    if (arguments->length > 1) {
+        SolBoolean proto_obj = sol_bool_value_of(arguments->first->next->value);
+        proto = proto_obj->value;
+        sol_obj_release((SolObject) proto_obj);
+    }
+    
+    TokenPoolEntry current_token, tmp;
+    HASH_ITER(hh, patch->properties, current_token, tmp) {
+        sol_obj_set_prop(self, current_token->identifier, current_token->binding->value);
+    }
+    if (proto) {
+        HASH_ITER(hh, patch->prototype, current_token, tmp) {
+            sol_obj_set_proto(self, current_token->identifier, current_token->binding->value);
+        }
+    }
+    
+    return sol_obj_retain(self);
+}
+
 DEFINEOP(OBJECT_TO_STRING) {
     char* value = sol_obj_inspect(self);
     SolObject ret = sol_obj_retain((SolObject) sol_string_create(value));
