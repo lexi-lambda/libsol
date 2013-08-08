@@ -81,10 +81,18 @@ bool sol_error_type_extends_type(sol_error_type* error_type, sol_error_type* typ
 /* error types */
 
 SOL_ERROR_DECLARE(Error);
+SOL_ERROR_DECLARE(BoundsError);
 SOL_ERROR_DECLARE(BytecodeError);
 SOL_ERROR_DECLARE(TypeError);
 
 /* helper macros */
+
+#define SOL_THROW_MISSING_ARGUMENT(name) \
+    throw_msg (Error, "missing argument '%s'", (name))
+
+#define SOL_REQUIRE_BOUNDS(index, min, max) \
+    if ((index) < min || (index) > max)                                                                    \
+        for (; 1; throw_msg (BoundsError, "index '%i' was out of bounds [%i, %i]", (index), (min), (max)))
 
 #define SOL_REQUIRE_TYPE(obj, type) \
     if (!(obj) || ((SolObject) obj)->type_id != (type))                                                                            \

@@ -8,6 +8,7 @@ jmp_buf _sol_error_try_frames[512];
 static sol_error* current_error = NULL;
 
 SOL_ERROR_DEFINE(Error, NULL);
+SOL_ERROR_DEFINE(BoundsError, &Error);
 SOL_ERROR_DEFINE(BytecodeError, &Error);
 SOL_ERROR_DEFINE(TypeError, &Error);
 
