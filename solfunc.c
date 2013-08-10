@@ -3,6 +3,7 @@
 #include "solfunc.h"
 #include "solop.h"
 #include "soltypes.h"
+#include "solerror.h"
 
 static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments, bool evaluate_tokens, bool evaluate_lists);
 
@@ -55,31 +56,32 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     }
     
     SolList statements = func->statements;
-    
-    // establish closure scope
-    sol_token_pool_push_m(func->closure_scope);
-    // create function scope
-    sol_token_pool_push();
-    
-    // create 'this' reference
-    sol_token_register("this", (SolObject) func);
-    // create 'self' reference
-    sol_token_register("self", self);
-    
-    // insert 'arguments' reference and perform parameter substitution
-    sol_func_substitute_parameters(func->parameters, arguments, evaluate_tokens, evaluate_lists);
-    
-    // execute function statements
     SolObject ans = nil;
     
-    SOL_LIST_ITR(statements) {
-        sol_obj_release(ans);
-        ans = sol_obj_evaluate(statements->current->value);
+    try {
+        // establish closure scope
+        sol_token_pool_push_m(func->closure_scope);
+        // create function scope
+        sol_token_pool_push();
+        
+        // create 'this' reference
+        sol_token_register("this", (SolObject) func);
+        // create 'self' reference
+        sol_token_register("self", self);
+        
+        // insert 'arguments' reference and perform parameter substitution
+        sol_func_substitute_parameters(func->parameters, arguments, evaluate_tokens, evaluate_lists);
+        
+        // execute function statements
+        SOL_LIST_ITR(statements) {
+            sol_obj_release(ans);
+            ans = sol_obj_evaluate(statements->current->value);
+        }
+    } finally {
+        // destroy function/closure scope
+        sol_token_pool_pop();
+        func->closure_scope = sol_token_pool_pop_m();
     }
-    
-    // destroy function/closure scope
-    sol_token_pool_pop();
-    func->closure_scope = sol_token_pool_pop_m();
     
     return ans;
 }
