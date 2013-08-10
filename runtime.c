@@ -70,8 +70,16 @@ void sol_runtime_init() {
         fclose(f);
         SolList arguments = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
         sol_list_add_obj(arguments, (SolObject) sol_string_create("solcore"));
-        OP_REQUIRE(arguments, nil);
+        SolObject exports = OP_REQUIRE(arguments, nil);
         sol_obj_release((SolObject) arguments);
+        
+        // unwrap all exports into the global scope
+        TokenPoolEntry current_token, tmp;
+        HASH_ITER(hh, exports->properties, current_token, tmp) {
+            sol_token_register(current_token->identifier, current_token->binding->value);
+        }
+        
+        sol_obj_release(exports);
     }
 }
 
@@ -116,7 +124,6 @@ static inline void sol_runtime_init_operators() {
     REGISTER_OP(?, CONDITIONAL);
     sol_obj_set_prop((SolObject) OBJ_CONDITIONAL, "$evaluate-tokens", (SolObject) sol_bool_create(false));
     sol_obj_set_prop((SolObject) OBJ_CONDITIONAL, "$evaluate-lists", (SolObject) sol_bool_create(false));
-    REGISTER_OP(if, IF);
     REGISTER_OP(loop, LOOP);
     REGISTER_OP(cat, CAT);
     

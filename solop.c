@@ -351,22 +351,6 @@ DEFINEOP(CONDITIONAL) {
     }
 }
 
-DEFINEOP(IF) {
-    SOL_REQUIRE_TYPE(arguments->first->next->value, TYPE_SOL_FUNC);
-    if (arguments->first->next->next)
-        SOL_REQUIRE_TYPE(arguments->first->next->next->value, TYPE_SOL_FUNC);
-    SolBoolean condition_object = sol_bool_value_of(arguments->first->value);
-    bool condition = condition_object->value;
-    sol_obj_release((SolObject) condition_object);
-    if (condition) {
-        return sol_func_execute((SolFunction) arguments->first->next->value, (SolList) nil, nil);
-    } else if (arguments->first->next->next != NULL) {
-        return sol_func_execute((SolFunction) arguments->first->next->next->value, (SolList) nil, nil);
-    } else {
-        return nil;
-    }
-}
-
 DEFINEOP(LOOP) {
     SolObject result = nil;
     SOL_REQUIRE_TYPE(arguments->first->value, TYPE_SOL_FUNC);
