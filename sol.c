@@ -92,12 +92,12 @@ void sol_obj_release(SolObject obj) {
             }
             case TYPE_SOL_LIST: {
                 SolList list = (SolList) obj;
-                list->current = list->first;
-                while (list->current != NULL) {
-                    sol_list_node* current = list->current;
-                    list->current = list->current->next;
-                    sol_obj_release(current->value);
-                    free(current);
+                sol_list_node* current = list->first;
+                while (current != NULL) {
+                    sol_list_node* tmp = current;
+                    current = current->next;
+                    sol_obj_release(tmp->value);
+                    free(tmp);
                 }
                 break;
             }

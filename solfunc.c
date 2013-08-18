@@ -22,8 +22,8 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     
     if (func->is_operator) {
         SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-        SOL_LIST_ITR(arguments) {
-            SolObject object = arguments->current->value;
+        SOL_LIST_ITR(arguments, current, i) {
+            SolObject object = current->value;
             switch (object->type_id) {
                 case TYPE_SOL_TOKEN:
                     if (evaluate_tokens) {
@@ -73,9 +73,9 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
         sol_func_substitute_parameters(func->parameters, arguments, evaluate_tokens, evaluate_lists);
         
         // execute function statements
-        SOL_LIST_ITR(statements) {
+        SOL_LIST_ITR(statements, current, i) {
             sol_obj_release(ans);
-            ans = sol_obj_evaluate(statements->current->value);
+            ans = sol_obj_evaluate(current->value);
         }
     } finally {
         // destroy function/closure scope
@@ -90,8 +90,8 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
     // evaluate arguments
     SolList evaluated = sol_list_create(false);
     sol_token_register("arguments", (SolObject) evaluated);
-    SOL_LIST_ITR(arguments) {
-        SolObject object = arguments->current->value;
+    SOL_LIST_ITR(arguments, current, i) {
+        SolObject object = current->value;
         switch (object->type_id) {
             case TYPE_SOL_TOKEN:
                 if (evaluate_tokens) {
@@ -120,11 +120,10 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
     }
     
     // register parameters
-    evaluated->current = evaluated->first;
-    SOL_LIST_ITR(parameters) {
-        SolToken token = (SolToken) parameters->current->value;
-        SolObject object = evaluated->current ? evaluated->current->value : nil;
+    SOL_LIST_ITR_PARALLEL(parameters, current_parameter, i_parameter, evaluated, current_evaluated, i_evaluated) {
+        if (!current_parameter) break;
+        SolToken token = (SolToken) current_parameter->value;
+        SolObject object = current_evaluated ? current_evaluated->value : nil;
         sol_token_register(token->identifier, object);
-        if (evaluated->current) evaluated->current = evaluated->current->next;
     }
 }

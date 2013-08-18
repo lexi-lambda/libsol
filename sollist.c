@@ -10,8 +10,6 @@ SolList sol_list_create(bool object_mode) {
             NULL,
             NULL,
             0,
-            NULL,
-            0
         }, sizeof(sol_list));
 }
 
@@ -42,7 +40,7 @@ void sol_list_add_obj(SolList list, SolObject obj) {
 SolObject sol_list_remove_obj(SolList list, int index) {
     if (index == 0) {
         sol_list_node* removed_node = list->first;
-        list->first = list->current = list->first->next;
+        list->first = list->first->next;
         removed_node->next->prev = NULL;
         SolObject ret = removed_node->value;
         free(removed_node);
@@ -51,30 +49,30 @@ SolObject sol_list_remove_obj(SolList list, int index) {
     }
     if (index == list->length - 1) {
         sol_list_node* removed_node = list->last;
-        list->last = list->current = list->last->prev;
+        list->last = list->last->prev;
         removed_node->prev->next = NULL;
         SolObject ret = removed_node->value;
         free(removed_node);
         return ret;
     }
     // use fastest iteration direction
+    sol_list_node* current;
     if (index < list->length / 2) {
-        list->current_index = 0;
-        list->current = list->last;
-        while (list->current_index < index) {
-            list->current_index++;
-            list->current = list->current->next;
+        int current_index = 0;
+        current = list->last;
+        while (current_index < index) {
+            current_index++;
+            current = current->next;
         }
     } else {
-        list->current_index = list->length - 1;
-        list->current = list->first;
-        while (list->current_index > index) {
-            list->current_index--;
-            list->current = list->current->prev;
+        int current_index = list->length - 1;
+        current = list->first;
+        while (current_index > index) {
+            current_index--;
+            current = current->prev;
         }
     }
-    sol_list_node* removed_node = list->current;
-    list->current = list->first;
+    sol_list_node* removed_node = current;
     removed_node->prev->next = removed_node->next;
     removed_node->next->prev = removed_node->prev;
     SolObject ret = removed_node->value;
@@ -94,10 +92,10 @@ void sol_list_insert_object(SolList list, SolObject obj, int index) {
         new_node->prev = NULL;
         list->first = new_node;
     } else {
-        for (list->current = list->first; index > 0; index--, list->current = list->current->next) {
-            new_node->next = list->current->next;
-            new_node->prev = list->current;
-            list->current->next = new_node;
+        for (sol_list_node* current = list->first; index > 0; index--, current = current->next) {
+            new_node->next = current->next;
+            new_node->prev = current;
+            current->next = new_node;
         }
     }
     list->length++;
@@ -105,30 +103,29 @@ void sol_list_insert_object(SolList list, SolObject obj, int index) {
 
 SolObject sol_list_get_obj(SolList list, int index) {
     // use fastest iteration direction
+    sol_list_node* current;
     if (index < list->length / 2) {
-        list->current_index = 0;
-        list->current = list->first;
-        while (list->current_index < index) {
-            list->current_index++;
-            list->current = list->current->next;
+        int current_index = 0;
+        current = list->first;
+        while (current_index < index) {
+            current_index++;
+            current = current->next;
         }
     } else {
-        list->current_index = list->length - 1;
-        list->current = list->last;
-        while (list->current_index > index) {
-            list->current_index--;
-            list->current = list->current->prev;
+        int current_index = list->length - 1;
+        current = list->last;
+        while (current_index > index) {
+            current_index--;
+            current = current->prev;
         }
     }
-    return sol_obj_retain(list->current->value);
+    return sol_obj_retain(current->value);
 }
 
 int sol_list_index_of(SolList list, SolObject obj) {
-    int i = 0;
-    SOL_LIST_ITR(list) {
-        if (sol_obj_equals(list->current->value, obj))
+    SOL_LIST_ITR(list, current, i) {
+        if (sol_obj_equals(current->value, obj))
             return i;
-        i++;
     }
     return -1;
 }

@@ -21,8 +21,6 @@ STRUCT_EXTEND(sol_obj, sol_list,
     bool object_mode;
     sol_list_node *first;
     sol_list_node *last;
-    int current_index;
-    sol_list_node *current;
     int length;
 );
 typedef sol_list* SolList;
@@ -34,11 +32,23 @@ STRUCT_EXTEND(sol_obj, sol_list_frozen,
 );
 typedef sol_list_frozen* SolListFrozen;
 
-#define SOL_LIST_ITR(list) for (                                       \
-    (list)->current = (list)->first, (list)->current_index = 0;        \
-    (list)->current != NULL && (list)->current_index < (list)->length; \
-    (list)->current = (list)->current->next, (list)->current_index++   \
-)
+#define SOL_LIST_ITR(list, el, i)                          \
+    for (sol_list_node* el, * _once = 1; _once; _once = 0) \
+    for (int i, _once = 1; _once; _once = 0)               \
+    for (                                                  \
+        el = (list)->first, i = 0;                         \
+        el && i < (list)->length;                          \
+        el = el->next, i++                                 \
+    )
+
+#define SOL_LIST_ITR_PARALLEL(list1, el1, i1, list2, el2, i2)                                         \
+    for (sol_list_node* el1, * _once = 1; _once; _once = 0) for (int i1, _once = 1; _once; _once = 0) \
+    for (sol_list_node* el2, * _once = 1; _once; _once = 0) for (int i2, _once = 1; _once; _once = 0) \
+    for (                                                                                             \
+        el1 = (list1)->first, el2 = (list2)->first, i1 = i2 = 0;                                      \
+        (el1 && i1 < (list1)->length) || (el2 && i2 < (list2)->length);                               \
+        el1 = el1 ? el1->next : NULL, el2 = el2 ? el2->next : NULL, i1++, i2++                        \
+    )
 
 /**
  * Creates a new, empty list object.
