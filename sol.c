@@ -177,9 +177,42 @@ SolObject sol_obj_evaluate(SolObject obj) {
             switch (first_type) {
                 case TYPE_SOL_FUNC: {
                     SolFunction func = (SolFunction) first_object;
+                    
                     SolList arguments = sol_list_slice_s(list, list->object_mode ? 2 : 1);
-                    SolObject result = sol_func_execute(func, arguments, self);
+                    bool evaluate_tokens = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-tokens"))->value;
+                    bool evaluate_lists = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-lists"))->value;
+                    
+                    // evaluate arguments
+                    SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+                    SOL_LIST_ITR(arguments, current, i) {
+                        switch (current->value->type_id) {
+                            case TYPE_SOL_TOKEN:
+                                if (evaluate_tokens) {
+                                    SolObject evaluated_object = sol_obj_evaluate(current->value);
+                                    sol_list_add_obj(evaluated, evaluated_object);
+                                    sol_obj_release(evaluated_object);
+                                } else {
+                                    sol_list_add_obj(evaluated, current->value);
+                                }
+                                break;
+                            case TYPE_SOL_LIST:
+                                if (evaluate_lists) {
+                                    SolObject evaluated_object = sol_obj_evaluate(current->value);
+                                    sol_list_add_obj(evaluated, evaluated_object);
+                                    sol_obj_release(evaluated_object);
+                                } else {
+                                    sol_list_add_obj(evaluated, current->value);
+                                }
+                                break;
+                            default:
+                                sol_list_add_obj(evaluated, current->value);
+                                break;
+                        }
+                    }
                     sol_obj_release((SolObject) arguments);
+                    
+                    SolObject result = sol_func_execute(func, evaluated, self);
+                    sol_obj_release((SolObject) evaluated);
                     sol_obj_release(self);
                     sol_obj_release(first_object);
                     return result;

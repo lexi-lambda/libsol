@@ -5,7 +5,7 @@
 #include "soltypes.h"
 #include "solerror.h"
 
-static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments, bool evaluate_tokens, bool evaluate_lists);
+static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments);
 
 SolFunction sol_func_create(SolList parameters, SolList statements) {
     return (SolFunction) sol_obj_clone_type((SolObject) Function, &(struct sol_func_raw){
@@ -21,37 +21,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     bool evaluate_lists = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-lists"))->value;
     
     if (func->is_operator) {
-        SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
-        SOL_LIST_ITR(arguments, current, i) {
-            SolObject object = current->value;
-            switch (object->type_id) {
-                case TYPE_SOL_TOKEN:
-                    if (evaluate_tokens) {
-                        SolObject evaluated_object = sol_obj_evaluate(object);
-                        sol_list_add_obj(evaluated, evaluated_object);
-                        sol_obj_release(evaluated_object);
-                    } else {
-                        sol_list_add_obj(evaluated, object);
-                    }
-                    break;
-                case TYPE_SOL_LIST:
-                    if (evaluate_lists) {
-                        SolObject evaluated_object = sol_obj_evaluate(object);
-                        sol_list_add_obj(evaluated, evaluated_object);
-                        sol_obj_release(evaluated_object);
-                    } else {
-                        sol_list_add_obj(evaluated, object);
-                    }
-                    break;
-                default: {
-                    SolObject evaluated_object = sol_obj_evaluate(object);
-                    sol_list_add_obj(evaluated, evaluated_object);
-                    sol_obj_release(evaluated_object);
-                }
-            }
-        }
-        SolObject result = ((SolOperator) func)->operator_ref(evaluated, self);
-        sol_obj_release((SolObject) evaluated);
+        SolObject result = ((SolOperator) func)->operator_ref(arguments, self);
         return result;
     }
     
@@ -70,7 +40,7 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
         sol_token_register("self", self);
         
         // insert 'arguments' reference and perform parameter substitution
-        sol_func_substitute_parameters(func->parameters, arguments, evaluate_tokens, evaluate_lists);
+        sol_func_substitute_parameters(func->parameters, arguments);
         
         // execute function statements
         SOL_LIST_ITR(statements, current, i) {
@@ -86,44 +56,15 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
     return ans;
 }
 
-static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments, bool evaluate_tokens, bool evaluate_lists) {
+static void inline sol_func_substitute_parameters(SolList parameters, SolList arguments) {
     // evaluate arguments
-    SolList evaluated = sol_list_create(false);
-    sol_token_register("arguments", (SolObject) evaluated);
-    SOL_LIST_ITR(arguments, current, i) {
-        SolObject object = current->value;
-        switch (object->type_id) {
-            case TYPE_SOL_TOKEN:
-                if (evaluate_tokens) {
-                    SolObject evaluated_object = sol_obj_evaluate(object);
-                    sol_list_add_obj(evaluated, evaluated_object);
-                    sol_obj_release(evaluated_object);
-                } else {
-                    sol_list_add_obj(evaluated, object);
-                }
-                break;
-            case TYPE_SOL_LIST:
-                if (evaluate_lists) {
-                    SolObject evaluated_object = sol_obj_evaluate(object);
-                    sol_list_add_obj(evaluated, evaluated_object);
-                    sol_obj_release(evaluated_object);
-                } else {
-                    sol_list_add_obj(evaluated, object);
-                }
-                break;
-            default: {
-                SolObject evaluated_object = sol_obj_evaluate(object);
-                sol_list_add_obj(evaluated, object);
-                sol_obj_release(evaluated_object);
-            }
-        }
-    }
+    sol_token_register("arguments", (SolObject) arguments);
     
     // register parameters
-    SOL_LIST_ITR_PARALLEL(parameters, current_parameter, i_parameter, evaluated, current_evaluated, i_evaluated) {
+    SOL_LIST_ITR_PARALLEL(parameters, current_parameter, i_parameter, arguments, current_argument, i_argument) {
         if (!current_parameter) break;
         SolToken token = (SolToken) current_parameter->value;
-        SolObject object = current_evaluated ? current_evaluated->value : nil;
+        SolObject object = current_argument ? current_argument->value : nil;
         sol_token_register(token->identifier, object);
     }
 }
