@@ -107,7 +107,6 @@ static inline void sol_runtime_init_operators() {
     sol_obj_set_prop((SolObject) OBJ_LAMBDA, "$evaluate-lists", (SolObject) sol_bool_create(false));
     REGISTER_OP(wrap, WRAP);
     REGISTER_OP(unwrap, UNWRAP);
-    REGISTER_OP(->token, TO_TOKEN);
     REGISTER_OP(print, PRINT);
     REGISTER_OP(not, NOT);
     REGISTER_OP(and, AND);

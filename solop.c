@@ -252,11 +252,6 @@ DEFINEOP(UNWRAP) {
     return nil;
 }
 
-DEFINEOP(TO_TOKEN) {
-    SOL_REQUIRE_DATATYPE(arguments->first->value, DATA_TYPE_STR);
-    return sol_obj_retain((SolObject) sol_token_create(((SolString) arguments->first->value)->value));
-}
-
 DEFINEOP(PRINT) {
     SolString value = (SolString) OP_CAT(arguments, nil);
     char* string = value->value;

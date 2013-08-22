@@ -17,9 +17,6 @@ SolFunction sol_func_create(SolList parameters, SolList statements) {
 }
 
 SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) {
-    bool evaluate_tokens = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-tokens"))->value;
-    bool evaluate_lists = sol_bool_value_of(sol_obj_get_prop((SolObject) func, "$evaluate-lists"))->value;
-    
     if (func->is_operator) {
         SolObject result = ((SolOperator) func)->operator_ref(arguments, self);
         return result;
