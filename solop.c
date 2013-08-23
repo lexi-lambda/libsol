@@ -129,9 +129,7 @@ DEFINEOP(BOUND) {
 DEFINEOP(SET) {
     SolToken token = (SolToken) arguments->first->value;
     SOL_REQUIRE_TYPE(token, TYPE_SOL_TOKEN);
-    SolObject evaluated = (arguments->first->next->value->type_id == TYPE_SOL_TOKEN ? sol_obj_evaluate : sol_obj_retain)(arguments->first->next->value);
-    SolObject result = sol_obj_retain(sol_token_update(token->identifier, evaluated));
-    sol_obj_release(evaluated);
+    SolObject result = sol_obj_retain(sol_token_update(token->identifier, arguments->first->next->value));
     return result;
 }
 
