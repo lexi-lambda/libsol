@@ -5,6 +5,10 @@ project(libsol C)
 # build for C99
 add_definitions(-std=c99)
 
+if(${UNIX})
+    add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_POSIX_C_SOURCE=200112)
+endif()
+
 # load extra modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
