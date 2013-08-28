@@ -10,6 +10,10 @@ To build libsol, you'll need to have the following installed on your system:
 * [libYAML](http://pyyaml.org/wiki/LibYAML) - a C YAML parser
 * [libuv](https://github.com/joyent/libuv) - a C event library, originally designed for use in Node.js
 
+If you're running Debian, you can get libYAML from the `lib-yaml-0-2` and `lib-yaml-dev`
+packages. libuv does not currently distribute packages, so it will need to be built
+from source (see the libuv readme).
+
 Building
 --------
 The libsol project can be built using [CMake](http://www.cmake.org/). It is
@@ -23,9 +27,9 @@ in the .gitignore file, so you could build the project using GNU Make like this:
     cd libsol
     mkdir build
     cd build
-    cmake -G "Unix Makefiles" ..
+    cmake ..
     make
-    make install
+    sudo make install
 
 Alternatively, you can specify other generators to use other build systems. For
 example, you could generate an Xcode project with the following command:
