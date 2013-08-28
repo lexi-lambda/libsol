@@ -1,10 +1,7 @@
 
 #include <string.h>
-#include <stdio.h>
 #include <math.h>
-#include <sys/types.h>
 #include <uv.h>
-
 #include "solop.h"
 #include "soltypes.h"
 #include "soltoken.h"

@@ -1,9 +1,8 @@
 
-#include "solutils.h"
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "solutils.h"
 
 int vasprintf(char **ret, const char *format, va_list args)
 {

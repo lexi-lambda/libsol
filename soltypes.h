@@ -8,7 +8,6 @@
 #ifndef SOLTYPES_H
 #define	SOLTYPES_H
 
-#include <stdbool.h>
 #include "sol.h"
 
 typedef enum data_type {

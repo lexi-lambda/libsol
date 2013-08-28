@@ -1,9 +1,3 @@
-/* 
- * File:   runtime.h
- * Author: Jake
- *
- * Created on November 19, 2012, 11:21 AM
- */
 
 #ifndef RUNTIME_H
 #define	RUNTIME_H

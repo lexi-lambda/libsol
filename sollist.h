@@ -1,14 +1,7 @@
-/* 
- * File:   sollist.h
- * Author: Jake
- *
- * Created on November 18, 2012, 8:56 PM
- */
 
 #ifndef SOLLIST_H
 #define	SOLLIST_H
 
-#include <stdbool.h>
 #include "sol.h"
 
 typedef struct sol_list_node {

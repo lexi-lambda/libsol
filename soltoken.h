@@ -1,9 +1,3 @@
-/* 
- * File:   soltoken.h
- * Author: Jake
- *
- * Created on November 18, 2012, 9:37 PM
- */
 
 #ifndef SOLTOKEN_H
 #define	SOLTOKEN_H

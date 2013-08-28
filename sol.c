@@ -1,14 +1,12 @@
 
-#include <stdio.h>
 #include <stdarg.h>
-
 #include "sol.h"
-#include "uthash.h"
 #include "soltoken.h"
 #include "solfunc.h"
 #include "solop.h"
 #include "soltypes.h"
 #include "solerror.h"
+#include "uthash.h"
 
 const sol_obj DEFAULT_OBJECT = { TYPE_SOL_OBJ, 0, NULL, NULL, NULL, NULL };
 

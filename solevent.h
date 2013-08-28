@@ -1,10 +1,3 @@
-//
-//  solevent.h
-//  libsol
-//
-//  Created by Jake King on 2/11/13.
-//
-//
 
 #ifndef SOLEVENT_H
 #define SOLEVENT_H

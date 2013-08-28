@@ -1,9 +1,3 @@
-/* 
- * File:   solop.h
- * Author: Jake
- *
- * Created on November 19, 2012, 8:04 PM
- */
 
 #ifndef SOLOP_H
 #define	SOLOP_H

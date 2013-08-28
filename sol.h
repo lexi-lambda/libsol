@@ -1,15 +1,12 @@
-/* 
- * File:   sol.h
- * Author: Jake
- *
- * Created on November 18, 2012, 8:54 PM
- */
 
 #ifndef SOL_H
 #define	SOL_H
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <sys/types.h>
 #include "solutils.h"
 
 #define STRUCT_EXTEND(super_name, name, body) struct name ## _raw { body }; typedef struct name { super_name super; body } name

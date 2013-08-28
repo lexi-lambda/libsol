@@ -1,9 +1,3 @@
-/* 
- * File:   solfunc.h
- * Author: Jake
- *
- * Created on November 19, 2012, 11:43 AM
- */
 
 #ifndef SOLFUNC_H
 #define	SOLFUNC_H

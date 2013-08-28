@@ -1,6 +1,5 @@
 
 #include <string.h>
-
 #include "soltypes.h"
 #include "sollist.h"
 
