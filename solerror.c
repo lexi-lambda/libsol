@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include "solutils.h"
 #include "solerror.h"
 
 int _sol_error_try_frame_top = -1;

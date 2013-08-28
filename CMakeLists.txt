@@ -23,7 +23,8 @@ set (LIBSOL_SOURCES
     soltoken.c
     soltypes.c
     solerror.c
-    solevent.c)
+    solevent.c
+    solutils.c)
 set (LIBSOL_PUBLIC_HEADERS
     runtime.h
     sol.h
@@ -35,6 +36,7 @@ set (LIBSOL_PUBLIC_HEADERS
     soltypes.h
     solerror.h
     solevent.h
+    solutils.h
     uthash.h)
 set (LIBSOL_PRIVATE_HEADERS
     )

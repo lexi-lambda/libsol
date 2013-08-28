@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 #include <stdbool.h>
+#include "solutils.h"
 
 #define STRUCT_EXTEND(super_name, name, body) struct name ## _raw { body }; typedef struct name { super_name super; body } name
 
