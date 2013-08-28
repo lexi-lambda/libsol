@@ -9,7 +9,6 @@
 #ifndef SOLEVENT_H
 #define SOLEVENT_H
 
-#include <uv.h>
 #include "sol.h"
 #include "solfunc.h"
 #include "solop.h"

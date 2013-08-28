@@ -1,5 +1,6 @@
 
 #include <dlfcn.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <yaml.h>
 #include "runtime.h"

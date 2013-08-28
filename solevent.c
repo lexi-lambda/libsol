@@ -1,4 +1,5 @@
 
+#include <uv.h>
 #include <stdio.h>
 #include "solevent.h"
 #include "soltypes.h"
