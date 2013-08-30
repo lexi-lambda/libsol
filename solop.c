@@ -5,14 +5,13 @@
 #include "solop.h"
 #include "soltypes.h"
 #include "soltoken.h"
-#include "solfunc.h"
 #include "solar.h"
 #include "solerror.h"
 #include "solevent.h"
 
 SolOperator sol_operator_create(SolOperatorRef operator_ref) {
     return (SolOperator) sol_obj_clone_type((SolObject) Function, &(struct sol_operator_raw){
-            true,
+            FUNC_TYPE_OPERATOR,
             operator_ref
         }, sizeof(sol_operator));
 }
@@ -151,22 +150,13 @@ DEFINEOP(FREEZE) {
     switch (obj->type_id) {
         case TYPE_SOL_LIST: {
             SolList list = (SolList) obj;
-            if (list->first && list->first->value->type_id == TYPE_SOL_TOKEN) {
-                SolObject first = sol_obj_evaluate(list->first->value);
-                if (first->type_id == TYPE_SOL_FUNC && ((SolFunction) first)->is_operator && ((SolOperator) first)->operator_ref == OP_FREEZE) {
-                    SolObject frozen = sol_obj_evaluate(obj);
-                    SolObjectFrozen ret = (SolObjectFrozen) sol_obj_retain((SolObject) sol_obj_freeze(frozen));
-                    sol_obj_release(frozen);
-                    return (SolObject) ret;
-                }
-            }
-            SolList evaluated = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
+            SolList result = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
             SOL_LIST_ITR(list, current, i) {
-                SolObject object = sol_obj_evaluate(current->value);
-                sol_list_add_obj(evaluated, object);
-                sol_obj_release(object);
+                SolObject evaluated = sol_obj_evaluate(current->value);
+                sol_list_add_obj(result, evaluated);
+                sol_obj_release(evaluated);
             }
-            return (SolObject) evaluated;
+            return (SolObject) result;
         }
         case TYPE_SOL_TOKEN:
             return sol_obj_retain(obj);
@@ -181,6 +171,15 @@ DEFINEOP(LAMBDA) {
     SOL_REQUIRE_TYPE(parameters, TYPE_SOL_LIST);
     SolList statements = sol_list_slice_s(arguments, 1);
     SolFunction func = (SolFunction) sol_obj_retain((SolObject) sol_func_create(parameters, statements));
+    sol_obj_release((SolObject) statements);
+    return (SolObject) func;
+}
+
+DEFINEOP(MACRO) {
+    SolList parameters = (SolList) sol_obj_evaluate((SolObject) arguments->first->value);
+    SOL_REQUIRE_TYPE(parameters, TYPE_SOL_LIST);
+    SolList statements = sol_list_slice_s(arguments, 1);
+    SolFunction func = (SolFunction) sol_obj_retain((SolObject) sol_macro_create(parameters, statements));
     sol_obj_release((SolObject) statements);
     return (SolObject) func;
 }

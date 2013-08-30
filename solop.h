@@ -3,12 +3,13 @@
 #define	SOLOP_H
 
 #include "sol.h"
+#include "solfunc.h"
 #include "sollist.h"
 
 typedef SolObject (*SolOperatorRef)(SolList arguments, SolObject self);
 
 STRUCT_EXTEND(sol_obj, sol_operator,
-    bool is_operator;
+    func_type type;
     SolOperatorRef operator_ref;
 );
 typedef sol_operator* SolOperator;
@@ -31,6 +32,7 @@ extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_FREEZE;
 extern const SolOperatorRef OP_LAMBDA;
+extern const SolOperatorRef OP_MACRO;
 extern const SolOperatorRef OP_WRAP;
 extern const SolOperatorRef OP_UNWRAP;
 // I/O

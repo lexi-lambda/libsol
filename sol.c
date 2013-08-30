@@ -75,7 +75,7 @@ void sol_obj_release(SolObject obj) {
             }
             case TYPE_SOL_FUNC: {
                 SolFunction func = (SolFunction) obj;
-                if (func->is_operator) break;
+                if (func->type_id == FUNC_TYPE_OPERATOR) break;
                 TokenPoolEntry current_token, tmp;
                 HASH_ITER(hh, func->closure_scope, current_token, tmp) {
                     sol_obj_release(current_token->binding->value);

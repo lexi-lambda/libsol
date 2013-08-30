@@ -5,8 +5,14 @@
 #include "sollist.h"
 #include "soltoken.h"
 
+typedef enum func_type {
+    FUNC_TYPE_FUNCTION,
+    FUNC_TYPE_MACRO,
+    FUNC_TYPE_OPERATOR
+} func_type;
+
 STRUCT_EXTEND(sol_obj, sol_func,
-    bool is_operator;
+    func_type type_id;
     SolList parameters;
     SolList statements;
     TokenMap closure_scope;
@@ -22,6 +28,8 @@ extern SolFunction Function;
  * @return function object
  */
 SolFunction sol_func_create(SolList parameters, SolList statements);
+
+SolFunction sol_macro_create(SolList parameters, SolList statements);
 
 /**
  * Executes a function.

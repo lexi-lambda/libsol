@@ -9,15 +9,24 @@ static void inline sol_func_substitute_parameters(SolList parameters, SolList ar
 
 SolFunction sol_func_create(SolList parameters, SolList statements) {
     return (SolFunction) sol_obj_clone_type((SolObject) Function, &(struct sol_func_raw){
-            false,
+            FUNC_TYPE_FUNCTION,
             (SolList) sol_obj_retain((SolObject) parameters),
             (SolList) sol_obj_retain((SolObject) statements),
             sol_token_pool_snapshot()
         }, sizeof(sol_func));
 }
 
+SolFunction sol_macro_create(SolList parameters, SolList statements) {
+    return (SolFunction) sol_obj_clone_type((SolObject) Function, &(struct sol_func_raw){
+        FUNC_TYPE_MACRO,
+        (SolList) sol_obj_retain((SolObject) parameters),
+        (SolList) sol_obj_retain((SolObject) statements),
+        sol_token_pool_snapshot()
+    }, sizeof(sol_func));
+}
+
 SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) {
-    if (func->is_operator) {
+    if (func->type_id == FUNC_TYPE_OPERATOR) {
         SolObject result = ((SolOperator) func)->operator_ref(arguments, self);
         return result;
     }
@@ -48,6 +57,17 @@ SolObject sol_func_execute(SolFunction func, SolList arguments, SolObject self) 
         // destroy function/closure scope
         sol_token_pool_pop();
         func->closure_scope = sol_token_pool_pop_m();
+    }
+    
+    if (func->type_id == FUNC_TYPE_MACRO) {
+        SOL_REQUIRE_TYPE(ans, TYPE_SOL_LIST);
+        SolList macro = (SolList) ans;
+        ans = nil;
+        SOL_LIST_ITR(macro, current, i) {
+            sol_obj_release(ans);
+            ans = sol_obj_evaluate(current->value);
+        }
+        sol_obj_release((SolObject) macro);
     }
     
     return ans;
