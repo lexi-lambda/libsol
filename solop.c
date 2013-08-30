@@ -158,11 +158,8 @@ DEFINEOP(FREEZE) {
             }
             return (SolObject) result;
         }
-        case TYPE_SOL_TOKEN:
-            return sol_obj_retain(obj);
         default:
-            return sol_obj_retain((SolObject) sol_obj_freeze(arguments->first->value));
-            break;
+            return sol_obj_retain(obj);
     }
 }
 
@@ -522,10 +519,6 @@ DEFINEOP(OBJECT_TO_STRING) {
 static int sol_obj_indent_level = 0;
 DEFINEOP(OBJECT_INSPECT) {
     int freeze_count = 0;
-    while (self->type_id == TYPE_SOL_OBJ_FROZEN) {
-        freeze_count++;
-        self = ((SolObjectFrozen) self)->value;
-    }
     switch (self->type_id) {
         case TYPE_SOL_OBJ:
         case TYPE_SOL_OBJ_NATIVE: {
@@ -645,9 +638,6 @@ DEFINEOP(OBJECT_INSPECT) {
             } else {
                 return sol_obj_retain((SolObject) sol_string_create(((SolToken) self)->identifier));
             }
-        case TYPE_SOL_OBJ_FROZEN:
-            fprintf(stderr, "fatal error: impossible case reached in sol_obj_inspect\n");
-            exit(EXIT_FAILURE);
     }
 }
 

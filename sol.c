@@ -109,9 +109,6 @@ void sol_obj_release(SolObject obj) {
                 native->dealloc(native);
                 break;
             }
-            case TYPE_SOL_OBJ_FROZEN:
-                sol_obj_release(((SolObjectFrozen) obj)->value);
-                break;
             case TYPE_SOL_OBJ:
                 break;
         }
@@ -225,19 +222,9 @@ SolObject sol_obj_evaluate(SolObject obj) {
             SolToken token = (SolToken) obj;
             return sol_token_resolve(token->identifier);
         }
-        case TYPE_SOL_OBJ_FROZEN:
-            return sol_obj_retain(((SolObjectFrozen) obj)->value);
         default:
             throw_msg (BytecodeError, "encountered unknown obj_type");
     }
-}
-
-SolObjectFrozen sol_obj_freeze(SolObject obj) {
-    SolObjectFrozen frozen = sol_obj_clone_type(Object, &(struct sol_obj_frozen_raw){
-        sol_obj_retain(obj)
-    }, sizeof(*frozen));
-    frozen->super.type_id = TYPE_SOL_OBJ_FROZEN;
-    return frozen;
 }
 
 bool sol_obj_equals(SolObject obj_a, SolObject obj_b) {
@@ -257,8 +244,6 @@ bool sol_obj_equals(SolObject obj_a, SolObject obj_b) {
             }
         case TYPE_SOL_TOKEN:
             return !strcmp(((SolToken) obj_a)->identifier, ((SolToken) obj_b)->identifier);
-        case TYPE_SOL_OBJ_FROZEN:
-            return sol_obj_equals(((SolObjectFrozen) obj_a)->value, ((SolObjectFrozen) obj_b)->value);
         default:
             return obj_a == obj_b;
     }
@@ -298,8 +283,6 @@ char* sol_type_string(obj_type type) {
             return "Datatype";
         case TYPE_SOL_TOKEN:
             return "Token";
-        case TYPE_SOL_OBJ_FROZEN:
-            return "FrozenObject";
         case TYPE_SOL_OBJ_NATIVE:
             return "NativeObject";
     }

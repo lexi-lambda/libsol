@@ -70,7 +70,7 @@ void sol_event_listener_dispatch(SolObject object, char* type, SolEvent event) {
     HASH_FIND_STR(object->listeners, type, listener);
     if (listener == NULL) return;
     
-    SolListFrozen args = (SolListFrozen) sol_obj_retain((SolObject) sol_list_create_frozen(false));
+    SolListFrozen args = (SolListFrozen) sol_obj_retain((SolObject) sol_list_create(false));
     sol_list_add_obj(args->value, event);
     
     for (struct sol_event_listener_list* listener_list = listener->listeners; listener_list != NULL; listener_list = listener_list->next) {

@@ -17,7 +17,6 @@ typedef enum obj_type {
     TYPE_SOL_FUNC,
     TYPE_SOL_DATATYPE,
     TYPE_SOL_TOKEN,
-    TYPE_SOL_OBJ_FROZEN,
     TYPE_SOL_OBJ_NATIVE
 } obj_type;
 
@@ -47,10 +46,6 @@ STRUCT_EXTEND(sol_obj, sol_obj_native,
     SolObjectNativeDestructor dealloc;
 );
 
-STRUCT_EXTEND(sol_obj, sol_obj_frozen,
-    SolObject value;
-);
-typedef sol_obj_frozen* SolObjectFrozen;
 
 /**
  * Creates a new "raw" object with no parent and only the get and set methods.
@@ -122,14 +117,6 @@ void sol_obj_patch(SolObject parent, SolObject patch);
  * @return object
  */
 SolObject sol_obj_evaluate(SolObject obj);
-
-/**
- * "Freezes" an object, creating a reference that evaluates to the original. The returned object has a
- * retain count of 0 and will need to be manually retained.
- * @param obj
- * @return frozen object
- */
-SolObjectFrozen sol_obj_freeze(SolObject obj);
 
 /**
  * Tests to see if two objects are considered equal.

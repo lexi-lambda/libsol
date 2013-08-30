@@ -51,14 +51,6 @@ typedef sol_list_frozen* SolListFrozen;
 SolList sol_list_create(bool object_mode);
 
 /**
- * Creates a new, empty list object and returns it frozen.
- * @param object_mode
- * @param output for list, or NULL
- * @return new list
- */
-SolListFrozen sol_list_create_frozen(bool object_mode);
-
-/**
  * Adds an object to the end of this list.
  * @param list
  * @param obj
