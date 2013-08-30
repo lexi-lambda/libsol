@@ -146,21 +146,15 @@ DEFINEOP(EVALUATE) {
 }
 
 DEFINEOP(FREEZE) {
-    SolObject obj = arguments->first->value;
-    switch (obj->type_id) {
-        case TYPE_SOL_LIST: {
-            SolList list = (SolList) obj;
-            SolList result = (SolList) sol_obj_retain((SolObject) sol_list_create(list->object_mode));
-            SOL_LIST_ITR(list, current, i) {
-                SolObject evaluated = sol_obj_evaluate(current->value);
-                sol_list_add_obj(result, evaluated);
-                sol_obj_release(evaluated);
-            }
-            return (SolObject) result;
-        }
-        default:
-            return sol_obj_retain(obj);
+    return sol_obj_retain(arguments->first->value);
+}
+
+DEFINEOP(LIST) {
+    SolList result = (SolList) sol_obj_retain((SolObject) sol_list_create(false));
+    SOL_LIST_ITR(arguments, current, i) {
+        sol_list_add_obj(result, current->value);
     }
+    return (SolObject) result;
 }
 
 DEFINEOP(LAMBDA) {
