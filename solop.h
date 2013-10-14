@@ -32,6 +32,7 @@ extern const SolOperatorRef OP_DEFINE;
 extern const SolOperatorRef OP_EVALUATE;
 extern const SolOperatorRef OP_FREEZE;
 extern const SolOperatorRef OP_LIST;
+extern const SolOperatorRef OP_OBJECT_LIST;
 extern const SolOperatorRef OP_LAMBDA;
 extern const SolOperatorRef OP_MACRO;
 extern const SolOperatorRef OP_WRAP;

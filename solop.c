@@ -157,6 +157,14 @@ DEFINEOP(LIST) {
     return (SolObject) result;
 }
 
+DEFINEOP(OBJECT_LIST) {
+    SolList result = (SolList) sol_obj_retain((SolObject) sol_list_create(true));
+    SOL_LIST_ITR(arguments, current, i) {
+        sol_list_add_obj(result, current->value);
+    }
+    return (SolObject) result;
+}
+
 DEFINEOP(LAMBDA) {
     SolList parameters = (SolList) sol_obj_evaluate((SolObject) arguments->first->value);
     SOL_REQUIRE_TYPE(parameters, TYPE_SOL_LIST);
