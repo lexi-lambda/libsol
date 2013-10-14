@@ -614,7 +614,11 @@ DEFINEOP(OBJECT_INSPECT) {
                 free(ret);
                 return ret_obj;
             } else {
-                return sol_obj_retain((SolObject) sol_string_create("nil"));
+                if (list->object_mode) {
+                    return sol_obj_retain((SolObject) sol_string_create("@[]"));
+                } else {
+                    return sol_obj_retain((SolObject) sol_string_create("nil"));
+                }
             }
         }
         case TYPE_SOL_TOKEN:
